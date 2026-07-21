@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Frauen-WG!! Zimmer in Bochum Innenstadt in Bochum - Bochum-Mitte | kleinanzeigen.de</title>
+<meta property="og:title" content="Frauen-WG!! Zimmer in Bochum Innenstadt">
+<meta name="description" content="Hey du, ich ziehe voraussichtlich zum 01. September aus unserer Frauen-WG in Bochum-Mitte aus und...">
+<!-- Haupt-Entität (Positiv-Pfad: darf strukturiert übernommen werden) -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Product","name":"Frauen-WG!! Zimmer in Bochum Innenstadt",
+ "description":"Helles WG-Zimmer in 2er Frauen-WG. Keine Terrasse und kein Balkon.",
+ "offers":{"@type":"Offer","price":"270","priceCurrency":"EUR"},
+ "address":{"postalCode":"44787","addressLocality":"Bochum"}}
+</script>
+<!-- ld+json-ImageObjects der „Ähnliche Anzeigen" (Live-Beweis 2.0.2→2.0.3):
+     Bild-Metadaten FREMDER Anzeigen – dürfen NIE in die Extraktion fließen. -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"ImageObject","creditText":"Kleinanzeigen",
+ "title":"Wohnen im schönen Ambiente: Sehr helle 2,5 -Zimmer-DG in Herne",
+ "description":"Diese schöne 2,5-Zimmer-Wohnung befindet sich im zweiten Obergeschoss und bietet auf 45 Quadratmetern eine durchdachte Raumaufteilung.","contentUrl":"https://img.example/1.jpg"}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"ImageObject","creditText":"Kleinanzeigen",
+ "title":"2-Zimmer-Wohnung in GE-Rotthausen, Stadtgrenze Essen",
+ "description":"Objektbeschreibung\n\nEtagenwohnung | 1. Obergeschoss | Gartenmitbenutzung\n\nDiese gepflegte 2-Zimmer-Wohnung mit großer Terrasse, 320 € Kaltmiete.","contentUrl":"https://img.example/2.jpg"}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"ImageObject","creditText":"Kleinanzeigen",
+ "title":"Gepflegte Einzimmer Wohnung in GE Beckhausen",
+ "description":"Tageslichthelle Wohnung mit Einbauküche, die im Mietpreis enthalten ist.","contentUrl":"https://img.example/3.jpg"}
+</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Kleinanzeigen"}</script>
+</head>
+<body>
+<!-- Nachgebaute Kleinanzeigen-Anzeigenseite (Struktur per curl von der echten
+     Seite verifiziert). Die ANZEIGE: WG-Zimmer, Miete 270 €, KEIN Garten/
+     Terrasse/Balkon/EBK; Detailliste nennt die GESAMT-Wohnung (70 m², 3 Zi.).
+     Beschreibung enthält eine MÖBELABLÖSE über 300 € (darf nie als Miete
+     gewertet werden). Fremdinhalte unten dürfen NIE extrahiert werden. -->
+<header>
+  <nav>Kleinanzeigen Bochum · Immobilien · Mietwohnungen · PLZ oder Ort suchen</nav>
+</header>
+
+<main>
+  <h1 id="viewad-title">Frauen-WG!! Zimmer in Bochum Innenstadt</h1>
+  <div id="viewad-price">270 €</div>
+  <div id="viewad-locality">44787 Bochum</div>
+  <div id="viewad-details">Wohnfläche <span>70 m²</span> Zimmer <span>3</span> Schlafzimmer <span>3</span> Etage <span>2</span></div>
+  <div id="viewad-description-text">
+    Hey du, ich ziehe voraussichtlich zum 01. September aus unserer Frauen-WG in
+    Bochum-Mitte aus. Helles WG-Zimmer in einer 2er Frauen-WG mitten in der
+    Innenstadt. Keine Terrasse und kein Balkon. Da wir rauch- und tierfrei leben,
+    suchen wir jemanden, der weder raucht noch Haustiere mitbringt.
+    Wichtiges zur Übernahme: Gegen einen Abschlag von 300 € müssen folgende
+    Möbel von mir übernommen werden.
+  </div>
+
+  <!-- Fremdinhalte (HTML-Seite): -->
+  <section id="viewad-similar-ads">
+    <h2>Ähnliche Anzeigen</h2>
+    <article>2,5 Zimmer Etagenwohnung mit großer Terrasse und Garten, 70 m², 320 € Kaltmiete, Bochum-Riemke</article>
+    <article>3 Zimmer Wohnung mit Balkon, 85 m², 780 € Kaltmiete, frei ab 01.10.2026, Essen</article>
+  </section>
+  <aside class="banner">Radisson Hotels Stuttgart – Zimmer mit Dachterrasse ab 89 €. Jetzt buchen!</aside>
+</main>
+
+<footer>Impressum · Datenschutz · Kleinanzeigen GmbH</footer>
+
+<div id="result" style="white-space:pre-wrap;font-family:monospace;border-top:2px solid #000;margin-top:2em;padding:1em"></div>
+<script src="/lib/parse.js"></script>
+<script>
+(function () {
+  // Identisch zum kleinanzeigen-Adapter (lib/portals.js contentSel):
+  var SEL = "#viewad-title, #viewad-price, #viewad-locality, #viewad-details, #viewad-configuration, #viewad-description-text, #viewad-extras";
+  var scopedText = WBA.parse.pageExtractor(SEL);
+  var scoped = WBA.parse.extractFlatInfo(scopedText);
+  // Fallback-Pfad (Portal-Umbau: contentSel trifft nichts) → nur Titel/Meta/Haupt-Entität:
+  var fallbackText = WBA.parse.pageExtractor("#gibt-es-nicht");
+  var fallback = WBA.parse.extractFlatInfo(fallbackText);
+  var fremd = function (o, txt) {
+    return /terrasse|garten|einbauk|balkon/i.test(JSON.stringify(o.features || [])) ||
+      o.preis === "320 €" || o.preis === "300 €" || o.zimmer === "2.5" ||
+      /herne|gelsenkirchen|rotthausen|essen/i.test(o.ort || "") ||
+      /2,5-Zimmer|Gartenmitbenutzung|Herne|Rotthausen/i.test(txt);
+  };
+  var res = {
+    scopedFeatures: scoped.features || [],
+    scopedPreis: scoped.preis || null,
+    scopedZimmer: scoped.zimmer || null,   // "3" steht WIRKLICH in der Anzeige (Gesamt-Wohnung)
+    scopedGroesse: scoped.groesse || null, // "70" ebenso
+    scopedOrt: scoped.ort || null,
+    fallbackPreis: fallback.preis || null,
+    fallbackFeatures: fallback.features || [],
+    PASS:
+      !fremd(scoped, scopedText) && !fremd(fallback, fallbackText) &&
+      scoped.preis === "270 €" &&           // Miete, NICHT die 300-€-Möbelablöse
+      fallback.preis === "270 €" &&         // aus der ld+json-Haupt-Entität
+      (scoped.features || []).length === 0, // Anzeige nennt keine Ausstattung
+  };
+  document.getElementById("result").textContent = JSON.stringify(res, null, 2);
+})();
+</script>
+</body>
+</html>

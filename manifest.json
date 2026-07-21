@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "WohnungsBewerber",
+  "version": "2.4.5",
+  "description": "Findet Wohnungen und bereitet deine Bewerbung vor. Du prüfst und sendest selbst. Lokal, kostenlos, keine Datenweitergabe.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "WohnungsBewerber öffnen",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["scripting", "storage", "tabs"],
+  "host_permissions": [
+    "https://*.wg-gesucht.de/*",
+    "https://*.kleinanzeigen.de/*",
+    "https://*.immobilienscout24.de/*",
+    "https://*.immowelt.de/*",
+    "https://*.immonet.de/*",
+    "https://api.anthropic.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.wg-gesucht.de/*",
+        "https://*.kleinanzeigen.de/*",
+        "https://*.immobilienscout24.de/*",
+        "https://*.immowelt.de/*",
+        "https://*.immonet.de/*"
+      ],
+      "js": ["lib/config.js", "lib/icons.js", "lib/parse.js", "lib/salutation.js", "lib/letter.js", "lib/portals.js", "lib/store.js", "lib/ai.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

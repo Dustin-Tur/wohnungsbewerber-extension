@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>AUDIT Store-Harness (async Tracker-/Write-Lock-Tests)</title>
+<style>
+  body { font: 14px/1.5 -apple-system, system-ui, sans-serif; padding: 24px; max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 1.2rem; }
+  #summary { font-weight: 700; padding: 10px 14px; border-radius: 8px; margin: 14px 0; }
+  #summary.ok { background: #e6f6ee; color: #15803d; }
+  #summary.fail { background: #fdecec; color: #b91c1c; }
+  li { margin: 2px 0; }
+  li.pass::before { content: "✓ "; color: #15803d; }
+  li.fail { color: #b91c1c; }
+  li.fail::before { content: "✗ "; }
+  code { background: #f2efe8; padding: 1px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+  <h1>Store-Harness: async Tracker- & Write-Lock-Tests</h1>
+  <p>Läuft <code>lib/store.js</code> gegen einen In-Memory-Mock von
+     <code>chrome.storage.local</code>. Öffnen im Browser (Promises funktionieren
+     hier nativ, anders als unter JXA). Ergänzt <code>tests/audit.portals-ai.test.js</code>.</p>
+  <div id="summary">läuft …</div>
+  <ul id="out"></ul>
+
+  <!-- Mock MUSS vor store.js definiert sein -->
+  <script>
+    (function () {
+      var mem = {};
+      window.__resetStore = function () { mem = {}; };
+      window.chrome = {
+        runtime: { lastError: null },
+        storage: {
+          local: {
+            get: function (defaults, cb) {
+              var res = {};
+              Object.keys(defaults || {}).forEach(function (k) {
+                res[k] = Object.prototype.hasOwnProperty.call(mem, k) ? mem[k] : defaults[k];
+              });
+              cb(res);
+            },
+            set: function (obj, cb) { Object.keys(obj).forEach(function (k) { mem[k] = obj[k]; }); cb && cb(); },
+            remove: function (keys, cb) {
+              (Array.isArray(keys) ? keys : [keys]).forEach(function (k) { delete mem[k]; });
+              cb && cb();
+            },
+          },
+        },
+      };
+    })();
+  </script>
+  <script src="../../lib/config.js"></script>
+  <script src="../../lib/store.js"></script>
+  <script>
+    (async function () {
+      var out = document.getElementById("out");
+      var summary = document.getElementById("summary");
+      var store = window.WBA.store;
+      var count = 0, failures = [];
+      function ok(desc, cond, detail) {
+        count++;
+        var li = document.createElement("li");
+        li.className = cond ? "pass" : "fail";
+        li.textContent = desc + (cond ? "" : (detail ? "  → " + detail : ""));
+        out.appendChild(li);
+        if (!cond) failures.push(desc);
+      }
+
+      try {
+        window.__resetStore();
+        await store.upsertTracker({ portal: "immoscout", listingId: "111", title: "A", status: "vorbereitet" });
+        await store.upsertTracker({ portal: "immoscout", listingId: "111", status: "beworben", ort: "Köln" });
+        var list = await store.getTracker();
+        ok("A1 kein Duplikat bei gleichem portal+listingId", list.length === 1, JSON.stringify(list));
+        ok("A2 Merge behält Titel & übernimmt neuen Status/Ort", list[0].title === "A" && list[0].status === "beworben" && list[0].ort === "Köln", JSON.stringify(list[0]));
+        ok("A3 appliedAt beim ersten 'beworben' gestempelt", typeof list[0].appliedAt === "number", JSON.stringify(list[0]));
+
+        ok("A4 hasApplied(beworben) === true", (await store.hasApplied("immoscout", "111")) === true);
+        await store.upsertTracker({ portal: "wg-gesucht", listingId: "222", status: "übersprungen" });
+        ok("A5 hasApplied(übersprungen) === false (soll erneut auftauchen)", (await store.hasApplied("wg-gesucht", "222")) === false);
+
+        var stamp = (await store.getTracker()).find(function (e) { return e.listingId === "111"; }).appliedAt;
+        await store.upsertTracker({ portal: "immoscout", listingId: "111", status: "beworben" });
+        var stamp2 = (await store.getTracker()).find(function (e) { return e.listingId === "111"; }).appliedAt;
+        ok("A6 appliedAt bleibt stabil (kein Re-Stempeln)", stamp === stamp2, stamp + " vs " + stamp2);
+
+        await store.removeTracker("immoscout", "111");
+        var afterDel = await store.getTracker();
+        ok("A7 removeTracker entfernt genau einen Eintrag", afterDel.length === 1 && afterDel[0].listingId === "222", JSON.stringify(afterDel));
+
+        // Write-Lock: 25 parallele Upserts dürfen keinen Eintrag verlieren.
+        window.__resetStore();
+        var ps = [];
+        for (var i = 0; i < 25; i++) ps.push(store.upsertTracker({ portal: "kleinanzeigen", listingId: "id" + i, status: "vorbereitet" }));
+        await Promise.all(ps);
+        var parList = await store.getTracker();
+        ok("A8 Write-Lock: 25 parallele Upserts → 25 Einträge (kein RMW-Verlust)", parList.length === 25, "got " + parList.length);
+      } catch (e) {
+        ok("EXCEPTION", false, String(e && e.stack || e));
+      }
+
+      summary.className = failures.length ? "fail" : "ok";
+      summary.textContent = failures.length
+        ? "FEHLGESCHLAGEN: " + failures.length + " von " + count + " Tests"
+        : "OK: alle " + count + " Tests bestanden";
+      window.__testDone = true;
+      window.__testSummary = summary.textContent;
+    })();
+  </script>
+</body>
+</html>

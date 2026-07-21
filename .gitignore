@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Tooling / lokale Konfiguration (gehört nicht ins öffentliche Repo)
+.claude/
+.agents/
+node_modules/
+
+# Marketing, große Medien & interne Notizen (nicht Teil des Codes)
+store-assets/
+video-pipeline/
+tiktok-ads/
+landing/
+AUDIT/
+MARKETING.md
+VIDEO-KIT.md
+STORE-LISTING.md
+WEBSITE-STAND.md
+
+# Interne Doks (nicht öffentlich)
+AUDIT.md
+VEROEFFENTLICHEN.md

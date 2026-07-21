@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Overlay-Demo – 3-Zimmer-Wohnung in Köln-Nippes</title>
+<meta name="description" content="Schöne 3-Zimmer-Wohnung in Köln-Nippes, 72 m², Kaltmiete 950 €, Balkon, Einbauküche, frei ab 01.09.2026.">
+<style>
+  body { font-family: -apple-system, sans-serif; margin: 0; background: #f4f4f4; color: #222; }
+  main { max-width: 720px; margin: 0 auto; padding: 32px 24px 240px; }
+  .price { font-size: 1.6rem; font-weight: 700; color: #2e7d32; }
+  label { display: block; margin: 14px 0 4px; font-weight: 600; }
+  input, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+</style>
+</head>
+<body>
+<!-- Demo-Anzeigenseite: rendert das ECHTE Overlay (content.js) im Preview,
+     damit Design-Änderungen ohne Portal-Login sichtbar/prüfbar sind.
+     Vor content.js werden ein Demo-Portal-Adapter registriert und die
+     chrome.storage-Getter gemockt (im Preview gibt es kein chrome.*). -->
+<main>
+  <h1 id="demo-title">Schöne 3-Zimmer-Wohnung in Köln-Nippes</h1>
+  <div class="price" id="demo-price">950 € Kaltmiete</div>
+  <div id="demo-desc">
+    Helle 3-Zimmer-Wohnung, 72 m², in Köln-Nippes. Mit Balkon und Einbauküche.
+    Frei ab 01.09.2026. Ansprechpartnerin: Frau Dr. Weber.
+  </div>
+  <h2>Kontakt</h2>
+  <form>
+    <label for="demo-name">Name</label><input id="demo-name" name="name">
+    <label for="demo-email">E-Mail</label><input id="demo-email" name="email" type="email">
+    <label for="demo-msg">Nachricht</label>
+    <textarea id="demo-msg" name="message" rows="8"></textarea>
+    <p><button id="demo-send" type="button">Nachricht senden</button></p>
+  </form>
+</main>
+
+<script src="/lib/config.js"></script>
+<script src="/lib/icons.js"></script>
+<script src="/lib/parse.js"></script>
+<script src="/lib/salutation.js"></script>
+<script src="/lib/letter.js"></script>
+<script src="/lib/portals.js"></script>
+<script src="/lib/store.js"></script>
+<script src="/lib/ai.js"></script>
+<script>
+  // Demo-Adapter + Store-Mocks – MUSS vor content.js laufen.
+  WBA.portals.PORTALS.push({
+    id: "demo", name: "Demo-Portal", host: /localhost|127\.0\.0\.1/i,
+    searchHome: location.href, buildSearchUrl() { return location.href; },
+    listingUrlRe: /overlay-demo/i, resultsUrlRe: /overlay-demo-results/i,
+    scrapeSel: "a", contentSel: "#demo-title, #demo-price, #demo-desc",
+    msgSel: "#demo-msg", sendSel: "#demo-send", sendText: /nachricht senden/i,
+  });
+  WBA.store.getProfile = async () => ({
+    name: "Alina Raphelt", age: "21", job: "Studentin", employment: "befristet",
+    income: "1.400 €", persons: "1", pets: "keine",
+    email: "alina@mail.de", phone: "0176 1234567", city: "Bochum",
+  });
+  WBA.store.getDocs = async () => ({ schufa: true, selbstauskunft: true });
+  // Durchlauf simulieren, damit auch die Run-Buttons (Gesendet/Überspringen/Stoppen) sichtbar sind:
+  WBA.store.getRun = async () => ({
+    active: true, portal: "demo", tone: "standard", index: 0,
+    queue: [{ url: location.href.split("#")[0], title: "Demo" }, { url: location.href + "?n=2", title: "Demo 2" }],
+  });
+</script>
+<script src="/content.js"></script>
+</body>
+</html>
