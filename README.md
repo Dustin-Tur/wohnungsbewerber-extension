@@ -11,18 +11,20 @@ Sie erkennt Wohnungsanzeigen auf den großen Portalen und bereitet in Sekunden e
 ## Was die Extension macht
 - Erkennt Wohnungsanzeigen auf **ImmobilienScout24, Kleinanzeigen, WG-Gesucht, Immowelt & Immonet**
 - Liest die relevanten Eckdaten der Anzeige aus (Parsing)
-- Erstellt mit KI (**Claude**) ein passendes, persönliches Anschreiben – inklusive korrekter Anrede
+- Erstellt in Sekunden ein passendes, persönliches Anschreiben – **lokal auf deinem Gerät**, inklusive korrekter Anrede (optional per eigener Claude-Anbindung)
 - Verwaltet deine Bewerberdaten **lokal im Browser** – keine Datenweitergabe
 - Du behältst die Kontrolle: **Prüfen und Absenden übernimmst du selbst**
 
 ## Datenschutz
-Alle Daten bleiben **lokal** auf deinem Gerät (`chrome.storage`). Es gibt keinen eigenen Server; für die Textgenerierung wird ein **von dir selbst hinterlegter** Anthropic-API-Key genutzt. Kein Tracking, keine Weitergabe.
+Alle Daten bleiben **lokal** auf deinem Gerät (`chrome.storage`). Die Anschreiben werden **standardmäßig direkt im Browser** erzeugt – ohne eigenen Server, ohne Internetverbindung, kostenlos. Kein Tracking, keine Weitergabe.
+
+Optionales Experten-Feature (standardmäßig **aus**): Wer möchte, kann einen **selbst hinterlegten** Anthropic-API-Key eintragen, um die Texte stattdessen von Claude formulieren zu lassen. Nur dann werden Anzeigen- und Profildaten an Anthropic übertragen, und es entstehen eigene Kosten beim Nutzer.
 
 ## Technik
 - **JavaScript**, **Chrome Extension APIs (Manifest V3)**
-- Modularer Aufbau in `lib/` (Parsing, Portale, Anschreiben, KI-Anbindung …)
+- Modularer Aufbau in `lib/` (Parsing, Portale, lokaler Anschreiben-Generator `letter.js`, optionale KI-Anbindung …)
 - Service Worker (`background.js`), Content Scripts, Dashboard-Oberfläche
-- Anbindung der **Anthropic Claude API**
+- **Optionale** Anbindung der Anthropic Claude API (Experten-Feature, standardmäßig aus)
 - Eigene Tests in `tests/`
 
 ## Projektstruktur
@@ -40,3 +42,10 @@ Konzipiert, entwickelt und veröffentlicht von **Dustin Tur** – KI-gestützt g
 
 ---
 *Dieses Repository enthält den Extension-Code. Marketing-Assets und die Landingpage sind bewusst ausgeklammert.*
+
+---
+
+## Lizenz & Rechte
+© 2026 Dustin Tur. Alle Rechte vorbehalten.
+
+Dieser Quellcode darf zur **Ansicht und Bewertung** (z. B. im Rahmen einer Bewerbung) eingesehen werden. Eine Weiterverwendung, Vervielfältigung, Veröffentlichung oder Verbreitung – ganz oder in Teilen – ist ohne vorherige schriftliche Zustimmung des Autors nicht gestattet.
