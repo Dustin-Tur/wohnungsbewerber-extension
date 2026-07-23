@@ -42,6 +42,22 @@ Legende: ☐ offen · ☑ bestanden · ✗ fehlgeschlagen (mit Notiz)
   mitgedruckt (Druckvorschau prüfen).
 - ☐ Bewerbungen-Tab: Statuswechsel per Dropdown, Filter, CSV-Export (Umlaute in
   Excel korrekt — BOM), Titel-Klick öffnet die Anzeige.
+- ☐ Auswertung „Was bei dir funktioniert" (seit 2.6.0), unter der Liste:
+  - ☐ Ohne Bewerbungen: nur der erklärende Hinweis, keine leeren Balken.
+  - ☐ Mit 1–4 Bewerbungen eines Tons: KEINE Prozentzahl, sondern „erst {n}
+    Bewerbungen (Quote ab 5)" und ein gestrichelter statt gefüllter Balken.
+    **Eine einzelne Antwort darf nie als „100 %" erscheinen.**
+  - ☐ Ab 5 Bewerbungen je Ton: Quote erscheint; Balkenlänge passt zur Prozentzahl.
+  - ☐ Alle Balken eines Blocks sind gleich lang (Schiene), nur die Füllung
+    unterscheidet sich – sonst ist der Vergleich optisch verzerrt.
+  - ☐ Kopfzeile behauptet einen „besten Ton" nur bei ≥ 8 Bewerbungen UND ≥ 15
+    Prozentpunkten Abstand; sonst „noch kein belastbarer Unterschied".
+  - ☐ Antwortzeit erscheint erst ab 3 Antworten MIT Zeitstempel (Einträge aus
+    Versionen vor 2.6.0 haben kein `repliedAt` und werden übergangen).
+  - ☐ Sprachumschalter EN: alle Texte englisch, Zahlen im englischen Format
+    („2.2 days" statt „2,2 Tage").
+  - ☐ Schmales Fenster (< 560 px): Balken rutscht in eine eigene Zeile, kein
+    horizontales Scrollen.
 - ☐ Hash-Navigation: Bei offener Zentrale im Overlay „Profil ausfüllen" klicken
   → bestehender Tab wird fokussiert UND wechselt auf den Profil-Reiter.
 - ☐ KI (optional, eigener Key): „KI testen" liefert Antwort; mit absichtlich
@@ -149,6 +165,35 @@ Vorbedingung: beim Portal eingeloggt.
 - ☐ „Familie Schmidt" → „Sehr geehrte Familie Schmidt,".
 - ☐ Umlaute/HTML-Entities im Anbieternamen (z. B. „M&uuml;ller" im Quelltext)
   → Anrede zeigt „Müller".
+
+## 3b. Englische Oberfläche (seit 2.5.0)
+
+Die Logik ist automatisiert abgedeckt (`tests/i18n.test.js`: Wörterbuch
+vollständig, keine unbekannten Schlüssel, Invariante „englische Oberfläche →
+deutscher Brief"). Hier bleibt, was nur im echten Browser sichtbar ist.
+
+- ☐ **Kernversprechen:** Oberfläche auf „EN" umschalten → Anschreiben erzeugen
+  → der Brief ist **komplett deutsch** („Sehr geehrte …", deutsche Grußformel).
+  Gleiches im Overlay auf einer echten Anzeige.
+- ☐ Umschalter im Kopf: „EN" ⇄ „DE", wirkt **ohne Reload**; die Wahl überlebt
+  Neuladen und Browser-Neustart.
+- ☐ Sprachwechsel bei **gefülltem** Ausgabefeld: Der erzeugte Brief bleibt
+  stehen (wird nicht durch den Platzhalter ersetzt), der Knopf heißt weiter
+  „Neu formulieren" / „Write a new version".
+- ☐ Portal-Tab offen lassen, im Dashboard umschalten → das Overlay im
+  Portal-Tab wechselt sofort mit; ein dort **von Hand geänderter** Entwurf
+  bleibt erhalten.
+- ☐ Alle fünf Reiter, Onboarding, KI-Bereich und Fußzeile ohne deutschen Rest
+  in der EN-Fassung — und ohne englischen Rest in der DE-Fassung.
+- ☐ Nur-englische Hinweise erscheinen **ausschließlich** auf EN (Brief ist
+  deutsch · Selbstauskunft ist deutsch · „Köln" statt „Cologne") und
+  hinterlassen auf DE **keinen leeren Kasten**.
+- ☐ Selbstauskunft-PDF und Nachfass-Text sind in beiden Sprachen deutsch.
+- ☐ CSV-Export auf EN: englische Kopfzeile + Statuswörter, Datei heißt
+  `applications.csv`; auf DE unverändert `bewerbungen.csv`.
+- ☐ Update-Verhalten: bestehende Installation aktualisieren → Oberfläche bleibt
+  deutsch (auch bei englisch eingestelltem Chrome). Frisch installieren mit
+  englischem Chrome → Oberfläche startet englisch.
 
 ## 4. Regression / Stabilität
 

@@ -265,6 +265,39 @@ textarea { resize: vertical; min-height: 80px; }
 /* Kompakte Statistik über der Bewerbungsliste */
 .tracker-stats { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 12px; }
 
+/* ---------- Auswertung „Was bei dir funktioniert" ---------- */
+.stat-lead { margin: 4px 0 16px; font-weight: 600; }
+.stat-lead.is-muted { font-weight: 500; color: var(--muted); }
+.stat-block + .stat-block { margin-top: 18px; }
+.stat-head { margin: 0 0 8px; font-size: .82rem; font-weight: 700; letter-spacing: .02em;
+  text-transform: uppercase; color: var(--muted); }
+/* EIN Grid für alle Zeilen eines Blocks (die Zeilen selbst sind display:contents).
+   Sonst bekäme jede Zeile ihre eigene Spaltenbreite – die Balken hätten je nach
+   Länge des Zahlentextes unterschiedlich lange Schienen und 45 % sähe kürzer
+   aus als 43 %. Vergleichbarkeit ist hier der ganze Zweck der Balken. */
+.stat-rows { display: grid; grid-template-columns: minmax(80px, 7rem) 1fr auto;
+  align-items: center; gap: 9px 10px; font-size: .85rem; }
+.stat-row { display: contents; }
+.stat-label { font-weight: 600; overflow-wrap: anywhere; }
+.stat-bar { height: 8px; border-radius: 999px; background: var(--tint); overflow: hidden; }
+.stat-bar > span { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
+/* Zu wenig Daten: gestrichelt statt gefüllt – die Lücke ist die Aussage. */
+.stat-bar.is-empty { background: none; border: 1px dashed var(--border); height: 10px; }
+.stat-val { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stat-val.is-muted { color: var(--muted); }
+.stat-note { margin: 16px 0 0; font-size: .82rem; color: var(--muted); }
+/* Schmal: Beschriftung und Zahl teilen sich die erste Zeile, der Balken bekommt
+   die zweite über die volle Breite – sonst blieben ihm neben dem Zahlentext nur
+   ein paar Pixel. Jede Zeile ist hier wieder ihr eigenes Grid; die Balken bleiben
+   trotzdem vergleichbar, weil sie alle die volle Zeilenbreite nutzen. */
+@media (max-width: 560px) {
+  .stat-rows { display: block; }
+  .stat-row { display: grid; grid-template-columns: 1fr auto; align-items: center;
+    gap: 5px 10px; padding: 6px 0; font-size: .8rem; }
+  .stat-bar { grid-column: 1 / -1; order: 2; }
+  .stat-val { text-align: right; }
+}
+
 /* ---------- Willkommen / Onboarding ---------- */
 .welcome {
   display: flex; align-items: center; gap: 14px; padding: 16px 18px; margin-bottom: 18px;
@@ -300,6 +333,12 @@ textarea { resize: vertical; min-height: 80px; }
 @media (max-width: 640px) { .steps { flex-direction: column; } }
 @media (prefers-reduced-motion: reduce) { .step { transition: none; } }
 
+/* Das hidden-Attribut muss gewinnen: Klassen wie .note setzen `display: flex`
+   und schlagen sonst die UA-Regel `[hidden] { display: none }` – ein nur für die
+   englische Fassung gedachter Hinweis (data-i18n-only) stünde dann als leerer
+   Kasten in der deutschen Oberfläche. */
+[hidden] { display: none !important; }
+
 /* ---------- Hervorgehobener Hinweis (z. B. Login nötig) ---------- */
 .note {
   display: flex; align-items: flex-start; gap: 9px; padding: 11px 14px; border-radius: var(--r-m);
@@ -321,8 +360,28 @@ textarea { resize: vertical; min-height: 80px; }
   color: var(--muted); cursor: pointer; user-select: none; border-radius: 999px;
   border: 1px solid var(--border); background: var(--card-solid);
   transition: border-color .15s, background .15s, color .15s;
+  /* Der Schalter ist ein <label> und erbte sonst `margin-bottom: 7px` aus der
+     Formular-Regel. Bei align-items:center wird die MARGIN-Box zentriert – der
+     Kreis säße dadurch 3,5 px zu hoch und stünde schief neben dem Sprachknopf. */
+  margin: 0;
 }
 .switch:hover { border-color: color-mix(in srgb, var(--accent) 45%, transparent); background: var(--tint); color: var(--text); }
+
+/* Sprachschalter: exakt dieselbe Geometrie wie der Theme-Schalter daneben –
+   38 px Kreis, gleicher Rand, gleicher Hover. Zwei identische Kreise lesen als
+   ein Paar; ein breiteres Oval daneben wirkt wie ein Fremdkörper.
+   Beschriftung ist die ZIEL-Sprache („EN" auf der deutschen Oberfläche) –
+   wie auf wohnungsbewerber.app. */
+.header-actions { display: flex; align-items: center; gap: 8px; }
+.lang-switch {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; padding: 0; flex: 0 0 auto;
+  border-radius: 999px; cursor: pointer; user-select: none;
+  font-family: inherit; font-size: .72rem; font-weight: 700; letter-spacing: .02em;
+  color: var(--muted); background: var(--card-solid); border: 1px solid var(--border);
+  transition: border-color .15s, background .15s, color .15s;
+}
+.lang-switch:hover { border-color: color-mix(in srgb, var(--accent) 45%, transparent); background: var(--tint); color: var(--text); }
 .switch input { position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0; }
 .switch .i svg { width: 17px; height: 17px; }
 .switch .i-moon { display: none; }

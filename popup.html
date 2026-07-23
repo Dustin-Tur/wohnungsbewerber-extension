@@ -23,8 +23,12 @@
 <body>
   <div class="c">
     <div class="logo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.8V21h14V9.8"/><path d="M10 21v-6h4v6"/></svg></div>
-    <div><div class="t">WohnungsBewerber</div><div class="s">wird geöffnet …</div></div>
+    <div><div class="t">WohnungsBewerber</div><div class="s" id="s">wird geöffnet …</div></div>
   </div>
+  <!-- Hier KEIN eingebettetes Skript: Manifest V3 erzwingt script-src 'self',
+       eingebettete Skripte werden blockiert und landen als roter Fehler auf
+       chrome://extensions. Die Sprachwahl für diese eine Zeile steht deshalb
+       oben in popup.js. Geprüft von tests/i18n.test.js (50–53). -->
   <script src="popup.js"></script>
 </body>
 </html>

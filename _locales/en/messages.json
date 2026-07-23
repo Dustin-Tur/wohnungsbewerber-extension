@@ -1,0 +1,14 @@
+{
+  "extName": {
+    "message": "WohnungsBewerber",
+    "description": "Extension name in the Chrome Web Store and toolbar. Kept as the German brand name on purpose."
+  },
+  "extDescription": {
+    "message": "Renting in Germany? Get your rental application letter written in German — you only fill in an English form. Local & free.",
+    "description": "Short description (max. 132 chars) shown under the name in the store. English keywords for expat search."
+  },
+  "actionTitle": {
+    "message": "Open WohnungsBewerber",
+    "description": "Tooltip of the toolbar icon."
+  }
+}

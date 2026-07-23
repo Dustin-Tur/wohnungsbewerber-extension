@@ -2,6 +2,120 @@
 
 Referenzen wie „A1", „B4" verweisen auf die Befund-Nummern in `AUDIT.md`.
 
+## 2.6.0 — 2026-07-23 · Auswertung „Was bei dir funktioniert“
+
+Beantwortet die einzige Frage, die der Tracker bisher offenließ: *Bringt der Ton
+überhaupt etwas – und wo lohnt sich die Zeit?* Bisher sah man nur, **dass** man
+sich beworben hat, nicht **was davon wirkt**.
+
+- **Neu: `lib/stats.js`** – reine Rechenschicht (kein DOM, kein `chrome.*`) mit
+  `summary()`, `groupBy()`, `leader()`, `replyTimes()`. Neue Karte im Reiter
+  „Bewerbungen“ unter der Liste: Antwortquote **je Ton** und **je Portal** als
+  Balken, dazu die mittlere und späteste Antwortzeit.
+- **Keine neue Datenerhebung.** Gerechnet wird ausschließlich mit Feldern, die
+  der Tracker ohnehin speichert (`ton`, `portal`, `status`, `appliedAt`). Die
+  Zahlen entstehen lokal und verlassen den Browser nicht – die Null-Daten-
+  Architektur bleibt unangetastet. Das ist zugleich die Antwort auf den
+  Audit-Punkt „ohne Zahlen keine Steuerung“, ohne Telemetrie einzuführen.
+- **Ehrlichkeit vor Zahlenschönheit** (die eigentliche Arbeit an dem Feature):
+  Eine Quote erscheint erst ab **5 Bewerbungen** je Gruppe – darunter steht
+  „erst {n} Bewerbungen (Quote ab 5)“ mit gestricheltem statt gefülltem Balken.
+  Ein „bester Ton“ wird erst behauptet, wenn er **mindestens 8 Bewerbungen** hat
+  **und** mindestens **15 Prozentpunkte** vor dem Zweiten liegt; sonst steht dort
+  ausdrücklich „noch kein belastbarer Unterschied“. Eine einzelne Antwort darf
+  nie zu „100 %“ werden – `tests/stats.test.js` (29 Tests) prüft genau diese
+  Zurückhaltung, nicht die Dreisatz-Rechnung.
+- **Neuer Zeitstempel `repliedAt`** in `store.upsertTracker()` – analog zum
+  bestehenden `appliedAt` beim ersten Wechsel auf „antwort“/„besichtigung“.
+  Grundlage der Antwortzeit; Alt-Einträge ohne Stempel werden still übergangen
+  statt geschätzt.
+- Balken-Darstellung: alle Zeilen eines Blocks teilen sich **ein** Grid, damit
+  die Schienen gleich lang und die Balken vergleichbar sind (sonst sähe 45 %
+  kürzer aus als 43 %). Schmale Fenster legen den Balken in eine eigene Zeile.
+- Vollständig zweisprachig (`stats.*` in `lib/i18n.js`), inkl. lokalisierter
+  Zahlen („2,2 Tage“ / „2.2 days“).
+
+## 2.5.1 — 2026-07-23 · Lokalisiertes Store-Listing (Name/Beschreibung)
+
+Ergänzt zur englischen Oberfläche (2.5.0) die zweite „Englisch"-Ebene: den
+**Auftritt im Chrome Web Store**, damit englischsprachige Suchbegriffe die
+Erweiterung überhaupt finden.
+
+- **Neu: `_locales/de/messages.json` + `_locales/en/messages.json`** und
+  `"default_locale": "de"` im Manifest. `name`, `description` und
+  `action.default_title` sind jetzt `__MSG_…__`-Platzhalter. Damit zeigt der
+  Store Namen, Kurzbeschreibung und Symbol-Tooltip je nach Store-/Browsersprache
+  auf Deutsch oder Englisch – und das Dashboard bietet erst dadurch eine
+  englische Sprachspalte fürs Listing an.
+- **Chromes `_locales` ≠ die UI-Übersetzung.** `_locales` betrifft ausschließlich
+  die Store-Metadaten (Name/Beschreibung/Tooltip). Die Bedienoberfläche läuft
+  weiter über `lib/i18n.js` (eigener Umschalter, nicht an die Browsersprache
+  gekettet). Der Kopfkommentar dort erklärt, warum.
+- **Stiller Update-Charakter bleibt:** `default_locale` ist Deutsch, die
+  deutschen Texte sind Byte-für-Byte die alten – bestehende Nutzer sehen keinen
+  veränderten Namen und keinen Zustimmungsdialog (keine neue Berechtigung).
+- Der Markenname **„WohnungsBewerber" bleibt in beiden Sprachen** gleich; die
+  englischen Suchbegriffe stecken in der Kurzbeschreibung („rental application
+  letter … in German … English form … local & free", 122/132 Zeichen).
+- Englische Listing-Texte (ausführliche Beschreibung, Single-Purpose,
+  Berechtigungs-Begründungen) liegen fertig in `STORE-LISTING.md` §7 – im
+  Dashboard unter der Sprache „English" einzufügen.
+
+## 2.5.0 — 2026-07-23 · Englische Oberfläche (englische UI, deutsche Briefe)
+
+Schließt das Conversion-Leck des englischen Website-Trichters
+(`SESSION-2026-07-22-ENGLISCHER-MIRROR.md`, Punkt 1): Wer über `/en/` kommt und
+kein Deutsch spricht, stand bisher vor einer komplett deutschen Erweiterung.
+
+- **Neu: `lib/i18n.js`** – eigenes Wörterbuch (306 Einträge, `de`/`en`
+  nebeneinander) mit `t()`, `apply()` für `[data-i18n*]`-Attribute und
+  Sprachwechsel-Ereignis. Bewusst **nicht** `chrome.i18n`/`_locales`: das folgt
+  starr der Browsersprache und ließe sich vom Nutzer nicht umschalten.
+- **Sprachschalter** im Kopf des Dashboards (Pill „EN"/„DE" neben dem
+  Hell/Dunkel-Schalter, wie auf wohnungsbewerber.app). Gespeichert als
+  `wba_lang`, wirkt **ohne Reload** und in allen Kontexten gleichzeitig – ein
+  offenes Portal-Overlay wechselt per `chrome.storage.onChanged` sofort mit
+  (von Hand geänderter Entwurfstext bleibt dabei erhalten).
+- **Übersetzt sind:** Dashboard (alle fünf Reiter, Onboarding, Validierungs- und
+  Statusmeldungen, Toasts, Verlauf, Unterlagen-Checkliste, KI-Einstellungen und
+  ‑Fehlertexte), das Overlay auf den Portalseiten (Trefferliste, Anzeige,
+  Durchlauf, Abschluss, Suchhinweis), CSV-Export (Kopfzeile, Statuswörter,
+  Datumsformat, Dateiname) und der ICS-Termin.
+- **Deutsch bleibt, was an die Vermietung geht** – das ist der eigentliche
+  Produktwert (englische Oberfläche → deutsche Ausgabe): Anschreiben, Anrede
+  („Sehr geehrte Frau …"), Nachfass-Text und die Mieterselbstauskunft. Die
+  Ton-Werte (`standard/formal/kurz/…`) und Tracker-Status bleiben als
+  Speicher-Schlüssel deutsch, nur ihre Beschriftung wechselt. Die Invariante
+  steht im Kopf von `lib/i18n.js` und wird von `tests/i18n.test.js` geprüft.
+- **Nur in der englischen Fassung** erscheinen drei Hinweise, die deutsche
+  Nutzer nicht brauchen (`data-i18n-only="en"`): dass der Brief auf Deutsch
+  geschrieben wird, dass die Selbstauskunft ein deutsches Formular ist, und
+  dass die Portale „Cologne"/„Munich" nicht kennen, sondern nur „Köln"/„München".
+- **Sprachwahl beim Start:** Neuinstallationen folgen der Browsersprache
+  (englischer Browser ⇒ englische Oberfläche). Bestehende Installationen werden
+  beim Update hart auf Deutsch festgeschrieben (`background.js`), damit niemand
+  nach einem Update unerwartet vor englischen Knöpfen sitzt.
+- **CSS-Korrektur:** `[hidden]` gilt jetzt `!important`. Klassen wie `.note`
+  setzen `display: flex` und schlugen sonst die UA-Regel – ein nur für die
+  englische Fassung gedachter Hinweis wäre als leerer Kasten in der deutschen
+  Oberfläche stehen geblieben.
+- **Popup:** Die englische Beschriftung des Mini-Launchers steht in `popup.js`,
+  **nicht** als eingebettetes Skript in `popup.html` – Manifest V3 erzwingt
+  `script-src 'self'` und blockiert eingebettete Skripte (sie landen als roter
+  „Fehler" auf `chrome://extensions`). Sie folgt der Browsersprache, weil sich
+  der Launcher schließt, bevor ein `chrome.storage`-Lesen zurückkäme.
+- **Tests:** neu `tests/i18n.test.js` (65 Prüfungen: Wörterbuch-Vollständigkeit,
+  keine unbekannten Schlüssel in HTML/JS, gleiche Platzhalter in beiden
+  Sprachen, und die harte Invariante „englische Oberfläche → deutscher Brief"
+  über 5 Töne × 20 Durchläufe = 100 Briefe je Testlauf). Zusätzlich eine
+  CSP-Prüfung aller Erweiterungs-Seiten auf eingebettete Skripte und
+  `onclick=`-Handler – genau der Fehler, der oben beim Popup passiert ist.
+  `tests/salutation.test.js` deckt die Badge-Texte in beiden Sprachen ab.
+  Gesamte Suite grün: 1850 Prüfungen.
+
+Keine Änderung am Sende-Verhalten (weiterhin nie automatisch), an der
+Portal-Logik oder an den Textbausteinen des Generators.
+
 ## 2.4.5 — 2026-07-16 · Audit-Feinschliff (Datenschutz, Vereinfachung, a11y)
 
 Umsetzung der Quick Wins aus dem Voll-Audit (`AUDIT/REPORT.md`):

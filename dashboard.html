@@ -6,6 +6,11 @@
 <link rel="stylesheet" href="shared.css">
 <title>WohnungsBewerber</title>
 </head>
+<!-- Oberflächensprache: alle sichtbaren Texte tragen data-i18n / data-i18n-html /
+     data-i18n-attr und werden von lib/i18n.js gefüllt (Deutsch = Fassung im
+     Wörterbuch, nicht der Text hier – der Text hier ist nur Fallback/Lesbarkeit).
+     data-i18n-only="en" blendet Hinweise ein, die nur Nicht-Deutschsprachige
+     brauchen. Der ERZEUGTE BRIEF bleibt in jeder Sprache Deutsch. -->
 <body>
 <div class="wrap">
   <div class="app-header">
@@ -13,16 +18,19 @@
       <span class="logo" data-icon="home"></span>
       <h1><span class="grad-text">WohnungsBewerber</span></h1>
     </div>
-    <label class="switch" title="Hell/Dunkel umschalten"><input type="checkbox" id="themeToggle" aria-label="Zwischen hellem und dunklem Design umschalten"><span class="i i-sun" data-icon="sun"></span><span class="i i-moon" data-icon="moon"></span></label>
+    <div class="header-actions">
+      <button class="lang-switch" id="langToggle" type="button" data-i18n="lang.switchTo" data-i18n-attr="title:lang.switchTitle;aria-label:lang.switchTitle">EN</button>
+      <label class="switch" data-i18n-attr="title:app.themeToggle"><input type="checkbox" id="themeToggle" data-i18n-attr="aria-label:app.themeToggleAria"><span class="i i-sun" data-icon="sun"></span><span class="i i-moon" data-icon="moon"></span></label>
+    </div>
   </div>
 
   <!-- NAVIGATION -->
   <nav class="nav" id="nav">
-    <button class="nav-btn active" data-tab="suchen"><span class="i" data-icon="search"></span> Suchen</button>
-    <button class="nav-btn" data-tab="anschreiben"><span class="i" data-icon="pen"></span> Anschreiben</button>
-    <button class="nav-btn" data-tab="bewerbungen"><span class="i" data-icon="inbox"></span> Bewerbungen <span class="count" id="navTrackerCount" hidden></span></button>
-    <button class="nav-btn" data-tab="profil"><span class="i" data-icon="user"></span> Profil</button>
-    <button class="nav-btn" data-tab="unterlagen"><span class="i" data-icon="file"></span> Unterlagen</button>
+    <button class="nav-btn active" data-tab="suchen"><span class="i" data-icon="search"></span> <span data-i18n="nav.search">Suchen</span></button>
+    <button class="nav-btn" data-tab="anschreiben"><span class="i" data-icon="pen"></span> <span data-i18n="nav.letter">Anschreiben</span></button>
+    <button class="nav-btn" data-tab="bewerbungen"><span class="i" data-icon="inbox"></span> <span data-i18n="nav.applications">Bewerbungen</span> <span class="count" id="navTrackerCount" hidden></span></button>
+    <button class="nav-btn" data-tab="profil"><span class="i" data-icon="user"></span> <span data-i18n="nav.profile">Profil</span></button>
+    <button class="nav-btn" data-tab="unterlagen"><span class="i" data-icon="file"></span> <span data-i18n="nav.documents">Unterlagen</span></button>
   </nav>
 
   <!-- ============ SUCHEN ============ -->
@@ -33,68 +41,74 @@
     <div class="welcome stack" id="onboarding" hidden>
       <div class="w-row">
         <span class="badge" data-icon="sparkle"></span>
-        <div class="w-text"><b>Willkommen beim WohnungsBewerber!</b><br>In drei Schritten zur ersten Bewerbung – alle Daten bleiben lokal, gesendet wird nur von dir.</div>
+        <div class="w-text"><b data-i18n="onb.title">Willkommen beim WohnungsBewerber!</b><br><span data-i18n="onb.text">In drei Schritten zur ersten Bewerbung – alle Daten bleiben lokal, gesendet wird nur von dir.</span></div>
       </div>
-      <ol class="steps" aria-label="So funktioniert WohnungsBewerber">
-        <li class="step clickable" data-step="profil"><span class="step-no">1</span><span class="step-tx"><b>Profil ausfüllen</b><br>einmalig deine Daten</span></li>
-        <li class="step" data-step="suche"><span class="step-no">2</span><span class="step-tx"><b>Suche starten</b><br>Ort &amp; Filter wählen</span></li>
-        <li class="step" data-step="senden"><span class="step-no">3</span><span class="step-tx"><b>Prüfen &amp; senden</b><br>du klickst selbst</span></li>
+      <!-- Nur in der englischen Fassung: der Kern-Nutzen muss sofort dastehen.
+           Der Text steht in EINEM span – .note ist ein Flex-Container, direkte
+           <b>-Kinder würden sonst zu eigenen Flex-Spalten. -->
+      <p class="note note-key" data-i18n-only="en" hidden><span data-i18n-html="onb.germanNote"></span></p>
+      <ol class="steps" data-i18n-attr="aria-label:onb.aria">
+        <li class="step clickable" data-step="profil"><span class="step-no">1</span><span class="step-tx"><b data-i18n="onb.step1">Profil ausfüllen</b><br><span data-i18n="onb.step1sub">einmalig deine Daten</span></span></li>
+        <li class="step" data-step="suche"><span class="step-no">2</span><span class="step-tx"><b data-i18n-html="onb.step2">Suche starten</b><br><span data-i18n-html="onb.step2sub">Ort &amp; Filter wählen</span></span></li>
+        <li class="step" data-step="senden"><span class="step-no">3</span><span class="step-tx"><b data-i18n-html="onb.step3">Prüfen &amp; senden</b><br><span data-i18n="onb.step3sub">du klickst selbst</span></span></li>
       </ol>
       <div class="row">
-        <button class="btn" id="welcomeDemo" type="button">Beispiel ansehen</button>
-        <button class="btn btn-primary" id="welcomeProfile" style="max-width:240px">Profil ausfüllen →</button>
+        <button class="btn" id="welcomeDemo" type="button" data-i18n="onb.demo">Beispiel ansehen</button>
+        <button class="btn btn-primary" id="welcomeProfile" style="max-width:240px" data-i18n="onb.profile">Profil ausfüllen →</button>
       </div>
     </div>
 
     <div class="card">
       <div class="card-title-row">
-        <h2><span class="badge" data-icon="search"></span> Wohnung suchen</h2>
+        <h2><span class="badge" data-icon="search"></span> <span data-i18n="search.title">Wohnung suchen</span></h2>
       </div>
-      <p class="hint">Filter setzen – der Assistent öffnet die Trefferlisten und geht die Anzeigen später mit dir durch. Du prüfst und sendest jede Nachricht selbst.</p>
+      <p class="hint" data-i18n="search.hint">Filter setzen – der Assistent öffnet die Trefferlisten und geht die Anzeigen später mit dir durch. Du prüfst und sendest jede Nachricht selbst.</p>
 
       <div class="grid-3">
         <div class="field">
-          <label for="fOrt">Ort / Stadt</label>
-          <input id="fOrt" autocomplete="off" placeholder="z. B. Köln">
+          <label for="fOrt" data-i18n="search.city">Ort / Stadt</label>
+          <input id="fOrt" autocomplete="off" data-i18n-attr="placeholder:search.cityPh" placeholder="z. B. Köln">
         </div>
         <div class="field">
-          <label for="fZimmer">Zimmer (min.)</label>
-          <input id="fZimmer" type="number" min="1" step="0.5" autocomplete="off" placeholder="z. B. 2">
+          <label for="fZimmer" data-i18n="search.rooms">Zimmer (min.)</label>
+          <input id="fZimmer" type="number" min="1" step="0.5" autocomplete="off" data-i18n-attr="placeholder:search.roomsPh" placeholder="z. B. 2">
         </div>
         <div class="field">
-          <label for="fQm">Größe ab (m²)</label>
-          <input id="fQm" type="number" min="0" autocomplete="off" placeholder="z. B. 55">
+          <label for="fQm" data-i18n="search.size">Größe ab (m²)</label>
+          <input id="fQm" type="number" min="0" autocomplete="off" data-i18n-attr="placeholder:search.sizePh" placeholder="z. B. 55">
         </div>
         <div class="field">
-          <label for="fPreis">Kaltmiete bis (€)</label>
-          <input id="fPreis" type="number" min="0" autocomplete="off" placeholder="z. B. 900">
+          <label for="fPreis" data-i18n="search.price">Kaltmiete bis (€)</label>
+          <input id="fPreis" type="number" min="0" autocomplete="off" data-i18n-attr="placeholder:search.pricePh" placeholder="z. B. 900">
         </div>
         <div class="field">
-          <label for="fTon">Ton der Anschreiben</label>
+          <label for="fTon" data-i18n="search.tone">Ton der Anschreiben</label>
           <select id="fTon">
-            <option value="standard">Standard</option>
-            <option value="formal">Formal</option>
-            <option value="kurz">Kurz</option>
-            <option value="herzlich">Herzlich</option>
-            <option value="selbstbewusst">Selbstsicher</option>
+            <option value="standard" data-i18n="tone.standard">Standard</option>
+            <option value="formal" data-i18n="tone.formal">Formal</option>
+            <option value="kurz" data-i18n="tone.kurz">Kurz</option>
+            <option value="herzlich" data-i18n="tone.herzlich">Herzlich</option>
+            <option value="selbstbewusst" data-i18n="tone.selbstbewusst">Selbstsicher</option>
           </select>
         </div>
       </div>
+      <!-- Nur englisch: „Cologne" findet auf deutschen Portalen nichts. -->
+      <p class="hint" data-i18n-only="en" data-i18n="search.cityNote" hidden></p>
 
-      <label style="margin-top:16px">Portale</label>
+      <label style="margin-top:16px" data-i18n="search.portals">Portale</label>
       <div class="portal-grid" id="portalGrid"><!-- per JS --></div>
 
       <label class="check-item" style="margin-top:14px; cursor:pointer">
         <input type="checkbox" id="autoOverlay" checked>
-        <span>Assistent-Overlay automatisch auf Wohnungsanzeigen anzeigen</span>
+        <span data-i18n="search.autoOverlay">Assistent-Overlay automatisch auf Wohnungsanzeigen anzeigen</span>
       </label>
 
       <div style="margin-top:16px">
-        <button class="btn btn-primary" id="startSearch">Suche starten</button>
+        <button class="btn btn-primary" id="startSearch" data-i18n="search.start">Suche starten</button>
       </div>
       <div id="searchStatus" class="form-status" aria-live="polite"></div>
-      <div class="note note-key" style="margin-top:14px"><span class="i" data-icon="key"></span> <span><b>Wichtig:</b> Du musst auf dem jeweiligen Portal eingeloggt sein, um Nachrichten senden zu können.</span></div>
-      <p class="hint" style="margin-top:10px">
+      <div class="note note-key" style="margin-top:14px"><span class="i" data-icon="key"></span> <span data-i18n-html="search.loginNote"><b>Wichtig:</b> Du musst auf dem jeweiligen Portal eingeloggt sein, um Nachrichten senden zu können.</span></div>
+      <p class="hint" style="margin-top:10px" data-i18n-html="search.botNote">
         Bei ImmoScout &amp; Immowelt kann die automatische Suche durch den Bot-Schutz gebremst werden – dann öffnet der Assistent die Suche und du klickst dich normal durch.
       </p>
     </div>
@@ -103,55 +117,60 @@
   <!-- ============ ANSCHREIBEN (Einzel/Manuell) ============ -->
   <section class="panel" id="tab-anschreiben">
     <div class="card">
-      <h2><span class="badge" data-icon="pen"></span> Anschreiben für eine Anzeige</h2>
-      <p class="hint">Text der Anzeige einfügen (oder aus der geöffneten Anzeige laden) und ein Anschreiben erzeugen.</p>
+      <h2><span class="badge" data-icon="pen"></span> <span data-i18n="letter.title">Anschreiben für eine Anzeige</span></h2>
+      <p class="hint" data-i18n="letter.hint">Text der Anzeige einfügen (oder aus der geöffneten Anzeige laden) und ein Anschreiben erzeugen.</p>
+      <!-- Nur englisch: die deutsche Ausgabe ist hier das Feature, kein Fehler. -->
+      <p class="note note-key" data-i18n-only="en" hidden><span data-i18n-html="letter.germanNote"></span></p>
       <div class="grid" style="margin-bottom:14px">
         <div class="field" style="margin-bottom:0">
-          <label for="contactAnrede">Ansprechpartner:in (optional)</label>
+          <label for="contactAnrede" data-i18n="letter.contactSalutation">Ansprechpartner:in (optional)</label>
           <select id="contactAnrede">
-            <option value="">— keine namentliche Anrede —</option>
-            <option value="Frau">Frau</option>
-            <option value="Herr">Herr</option>
+            <option value="" data-i18n="letter.noSalutation">— keine namentliche Anrede —</option>
+            <option value="Frau" data-i18n="letter.frau">Frau</option>
+            <option value="Herr" data-i18n="letter.herr">Herr</option>
           </select>
         </div>
         <div class="field" style="margin-bottom:0">
-          <label for="contactName">Name der Kontaktperson</label>
-          <input id="contactName" autocomplete="off" placeholder="z. B. Schmidt">
+          <label for="contactName" data-i18n="letter.contactName">Name der Kontaktperson</label>
+          <input id="contactName" autocomplete="off" data-i18n-attr="placeholder:letter.contactNamePh" placeholder="z. B. Schmidt">
         </div>
       </div>
       <div class="field">
-        <label for="flatDesc">Anzeigentext</label>
-        <textarea id="flatDesc" style="min-height:110px" placeholder="Anzeigentext hier einfügen …"></textarea>
+        <label for="flatDesc" data-i18n="letter.listingText">Anzeigentext</label>
+        <textarea id="flatDesc" style="min-height:110px" data-i18n-attr="placeholder:letter.listingTextPh" placeholder="Anzeigentext hier einfügen …"></textarea>
         <div class="row" style="margin-top:8px">
-          <button id="pasteClip" class="btn" type="button"><span class="i" data-icon="clipboard"></span> Aus Zwischenablage einfügen</button>
-          <button id="loadFromTab" class="btn" type="button"><span class="i" data-icon="globe"></span> Aus offener Anzeige laden</button>
-          <button id="demoBtn" class="btn" type="button"><span class="i" data-icon="sparkle"></span> Beispiel laden</button>
+          <button id="pasteClip" class="btn" type="button"><span class="i" data-icon="clipboard"></span> <span data-i18n="letter.paste">Aus Zwischenablage einfügen</span></button>
+          <button id="loadFromTab" class="btn" type="button"><span class="i" data-icon="globe"></span> <span data-i18n="letter.loadTab">Aus offener Anzeige laden</span></button>
+          <button id="demoBtn" class="btn" type="button"><span class="i" data-icon="sparkle"></span> <span data-i18n="letter.demo">Beispiel laden</span></button>
         </div>
       </div>
       <div id="flatStatus" class="form-status" aria-live="polite"></div>
       <div id="flatParsed" class="chips"></div>
 
       <div class="modes" style="margin-top:18px" id="modeBar">
-        <button class="btn active" data-mode="standard">Standard</button>
-        <button class="btn" data-mode="formal">Formal</button>
-        <button class="btn" data-mode="kurz">Kurz</button>
-        <button class="btn" data-mode="herzlich">Herzlich</button>
-        <button class="btn" data-mode="selbstbewusst">Selbstsicher</button>
+        <button class="btn active" data-mode="standard" data-i18n="tone.standard">Standard</button>
+        <button class="btn" data-mode="formal" data-i18n="tone.formal">Formal</button>
+        <button class="btn" data-mode="kurz" data-i18n="tone.kurz">Kurz</button>
+        <button class="btn" data-mode="herzlich" data-i18n="tone.herzlich">Herzlich</button>
+        <button class="btn" data-mode="selbstbewusst" data-i18n="tone.selbstbewusst">Selbstsicher</button>
       </div>
-      <button class="btn btn-primary" id="generate">Bewerbung generieren</button>
-      <p class="kbd-hint"><kbd>⌘/Strg</kbd> + <kbd>↵</kbd> erzeugt / formuliert neu</p>
+      <button class="btn btn-primary" id="generate" data-i18n="letter.generate">Bewerbung generieren</button>
+      <p class="kbd-hint"><kbd data-i18n="letter.kbd">⌘/Strg</kbd> + <kbd>↵</kbd> <span data-i18n="letter.kbdHint">erzeugt / formuliert neu</span></p>
       <div id="genStatus" class="form-status" role="alert" aria-live="polite"></div>
 
       <div style="margin-top:18px">
+        <!-- KEIN data-i18n: sobald hier ein Anschreiben steht, würde ein
+             Sprachwechsel es durch den Platzhalter ersetzen. dashboard.js setzt
+             den Platzhalter nur, solange .out-empty gesetzt ist. -->
         <div id="output" class="out-empty">Hier erscheint dein fertiges Anschreiben – klick oben auf „Bewerbung generieren".</div>
         <div class="output-actions">
           <span class="saved-note" id="copyNote"></span>
-          <button class="btn" id="copyBtn">Kopieren</button>
+          <button class="btn" id="copyBtn" data-i18n="letter.copy">Kopieren</button>
         </div>
       </div>
 
       <details class="history" id="history">
-        <summary>Zuletzt erstellt <span id="historyCount"></span></summary>
+        <summary><span data-i18n="history.title">Zuletzt erstellt</span> <span id="historyCount"></span></summary>
         <div class="history-list" id="historyList"></div>
       </details>
     </div>
@@ -161,76 +180,85 @@
   <section class="panel" id="tab-bewerbungen">
     <div class="card">
       <div class="card-title-row">
-        <h2><span class="badge" data-icon="inbox"></span> Deine Bewerbungen</h2>
+        <h2><span class="badge" data-icon="inbox"></span> <span data-i18n="tracker.title">Deine Bewerbungen</span></h2>
         <div class="row">
-          <select id="trackerFilter" style="width:auto" aria-label="Bewerbungen nach Status filtern">
-            <option value="">Alle</option>
-            <option value="vorbereitet">Vorbereitet</option>
-            <option value="beworben">Beworben</option>
-            <option value="antwort">Antwort erhalten</option>
-            <option value="besichtigung">Besichtigung</option>
-            <option value="übersprungen">Übersprungen</option>
+          <select id="trackerFilter" style="width:auto" data-i18n-attr="aria-label:tracker.filterAria">
+            <option value="" data-i18n="tracker.all">Alle</option>
+            <option value="vorbereitet" data-i18n="status.vorbereitet">Vorbereitet</option>
+            <option value="beworben" data-i18n="status.beworben">Beworben</option>
+            <option value="antwort" data-i18n="status.antwort">Antwort erhalten</option>
+            <option value="besichtigung" data-i18n="status.besichtigung">Besichtigung</option>
+            <option value="übersprungen" data-i18n="status.übersprungen">Übersprungen</option>
           </select>
-          <button class="btn" id="exportTracker" type="button"><span class="i" data-icon="download"></span> Export (CSV)</button>
+          <button class="btn" id="exportTracker" type="button"><span class="i" data-icon="download"></span> <span data-i18n="tracker.export">Export (CSV)</span></button>
         </div>
       </div>
-      <p class="hint">Überblick über alle vorbereiteten und gesendeten Bewerbungen – damit nichts doppelt läuft oder vergessen wird.</p>
+      <p class="hint" data-i18n="tracker.hint">Überblick über alle vorbereiteten und gesendeten Bewerbungen – damit nichts doppelt läuft oder vergessen wird.</p>
       <div id="trackerList" class="tracker-list"></div>
+    </div>
+
+    <!-- Auswertung der eigenen Bewerbungen – rechnet nur mit lokalen Daten. -->
+    <div class="card" id="statsCard">
+      <div class="card-title-row">
+        <h2><span class="badge" data-icon="chart"></span> <span data-i18n="stats.title">Was bei dir funktioniert</span></h2>
+      </div>
+      <p class="hint" data-i18n="stats.hint">Gerechnet wird nur mit dem, was ohnehin auf deinem Gerät liegt: Ton, Portal und Status deiner eigenen Bewerbungen. Nichts davon verlässt den Browser.</p>
+      <div id="statsBody"></div>
     </div>
   </section>
 
   <!-- ============ PROFIL ============ -->
   <section class="panel" id="tab-profil">
     <div class="card">
-      <h2><span class="badge" data-icon="user"></span> Dein Profil</h2>
-      <p class="hint">Einmal ausfüllen – wird lokal gespeichert und für alle Anschreiben genutzt.</p>
+      <h2><span class="badge" data-icon="user"></span> <span data-i18n="profile.title">Dein Profil</span></h2>
+      <p class="hint" data-i18n="profile.hint">Einmal ausfüllen – wird lokal gespeichert und für alle Anschreiben genutzt.</p>
       <span class="progress-label" id="progressLabel">Profil zu 0 % ausgefüllt</span>
       <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
 
       <div class="grid">
-        <div class="field"><label for="name">Voller Name</label><input id="name" autocomplete="off" placeholder="Max Mustermann"></div>
-        <div class="field"><label for="email">E-Mail (Kontakt)</label><input id="email" type="email" autocomplete="off" placeholder="name@mail.de"></div>
-        <div class="field"><label for="phone">Telefon (Kontakt)</label><input id="phone" type="tel" autocomplete="off" placeholder="0176 1234567"></div>
+        <div class="field"><label for="name" data-i18n="profile.name">Voller Name</label><input id="name" autocomplete="off" data-i18n-attr="placeholder:profile.namePh" placeholder="Max Mustermann"></div>
+        <div class="field"><label for="email" data-i18n="profile.email">E-Mail (Kontakt)</label><input id="email" type="email" autocomplete="off" data-i18n-attr="placeholder:profile.emailPh" placeholder="name@mail.de"></div>
+        <div class="field"><label for="phone" data-i18n="profile.phone">Telefon (Kontakt)</label><input id="phone" type="tel" autocomplete="off" placeholder="0176 1234567"></div>
       </div>
 
-      <p class="hint" style="margin:16px 0 8px">Adresse – damit Kontaktformulare komplett automatisch ausgefüllt werden.</p>
+      <p class="hint" style="margin:16px 0 8px" data-i18n="profile.addressHint">Adresse – damit Kontaktformulare komplett automatisch ausgefüllt werden.</p>
       <div class="grid-3">
-        <div class="field"><label for="street">Straße &amp; Nr.</label><input id="street" autocomplete="off" placeholder="Musterstraße 1"></div>
-        <div class="field"><label for="plz">PLZ</label><input id="plz" autocomplete="off" placeholder="50667"></div>
-        <div class="field"><label for="city">Wohnort</label><input id="city" autocomplete="off" placeholder="Köln"></div>
+        <div class="field"><label for="street" data-i18n-html="profile.street">Straße &amp; Nr.</label><input id="street" autocomplete="off" placeholder="Musterstraße 1"></div>
+        <div class="field"><label for="plz" data-i18n="profile.zip">PLZ</label><input id="plz" autocomplete="off" placeholder="50667"></div>
+        <div class="field"><label for="city" data-i18n="profile.city">Wohnort</label><input id="city" autocomplete="off" placeholder="Köln"></div>
       </div>
 
       <details class="more" open>
-        <summary>Für bessere Anschreiben (optional, aber empfohlen)</summary>
+        <summary data-i18n="profile.moreSummary">Für bessere Anschreiben (optional, aber empfohlen)</summary>
         <div class="grid">
-          <div class="field"><label for="age">Alter</label><input id="age" type="number" min="0" autocomplete="off" placeholder="32"></div>
-          <div class="field"><label for="job">Beruf</label><input id="job" autocomplete="off" placeholder="z. B. Softwareentwickler"></div>
+          <div class="field"><label for="age" data-i18n="profile.age">Alter</label><input id="age" type="number" min="0" autocomplete="off" placeholder="32"></div>
+          <div class="field"><label for="job" data-i18n="profile.job">Beruf</label><input id="job" autocomplete="off" data-i18n-attr="placeholder:profile.jobPh" placeholder="z. B. Softwareentwickler"></div>
           <div class="field">
-            <label for="employment">Beschäftigung</label>
+            <label for="employment" data-i18n="profile.employment">Beschäftigung</label>
             <select id="employment">
-              <option value="">keine Angabe</option>
-              <option value="unbefristet">Angestellt (unbefristet)</option>
-              <option value="befristet">Angestellt (befristet)</option>
-              <option value="selbststaendig">Selbstständig</option>
-              <option value="azubi">Ausbildung / Studium</option>
-              <option value="rente">Rente / Pension</option>
-              <option value="buergergeld">Arbeitslos / Bürgergeld / Grundsicherung</option>
+              <option value="" data-i18n="emp.none">keine Angabe</option>
+              <option value="unbefristet" data-i18n="emp.unbefristet">Angestellt (unbefristet)</option>
+              <option value="befristet" data-i18n="emp.befristet">Angestellt (befristet)</option>
+              <option value="selbststaendig" data-i18n="emp.selbststaendig">Selbstständig</option>
+              <option value="azubi" data-i18n="emp.azubi">Ausbildung / Studium</option>
+              <option value="rente" data-i18n="emp.rente">Rente / Pension</option>
+              <option value="buergergeld" data-i18n="emp.buergergeld">Arbeitslos / Bürgergeld / Grundsicherung</option>
             </select>
           </div>
-          <div class="field"><label for="income">Einkommen (netto/Monat)</label><input id="income" autocomplete="off" placeholder="z. B. 3200 €"></div>
-          <div class="field"><label for="persons">Anzahl Personen</label><input id="persons" type="number" min="1" autocomplete="off" placeholder="2"></div>
-          <div class="field"><label for="pets">Haustiere</label><input id="pets" autocomplete="off" placeholder="z. B. keine / 1 Katze"></div>
+          <div class="field"><label for="income" data-i18n="profile.income">Einkommen (netto/Monat)</label><input id="income" autocomplete="off" data-i18n-attr="placeholder:profile.incomePh" placeholder="z. B. 3200 €"></div>
+          <div class="field"><label for="persons" data-i18n="profile.persons">Anzahl Personen</label><input id="persons" type="number" min="1" autocomplete="off" placeholder="2"></div>
+          <div class="field"><label for="pets" data-i18n="profile.pets">Haustiere</label><input id="pets" autocomplete="off" data-i18n-attr="placeholder:profile.petsPh" placeholder="z. B. keine / 1 Katze"></div>
         </div>
-        <p style="font-size:.78rem;color:var(--muted);margin:10px 0 0">Wählst du bei „Beschäftigung" <b>„Arbeitslos / Bürgergeld / Grundsicherung"</b>, werden Beruf und Einkommen automatisch deaktiviert – die Miete läuft dann über das Jobcenter.</p>
+        <p style="font-size:.78rem;color:var(--muted);margin:10px 0 0" data-i18n-html="profile.buergergeldNote">Wählst du bei „Beschäftigung" <b>„Arbeitslos / Bürgergeld / Grundsicherung"</b>, werden Beruf und Einkommen automatisch deaktiviert – die Miete läuft dann über das Jobcenter.</p>
         <div class="field" style="margin-top:12px">
-          <label for="about">Kurze persönliche Beschreibung</label>
-          <textarea id="about" autocomplete="off" placeholder="z. B. ruhig, ordentlich, Nichtraucher, festes Arbeitsverhältnis seit 4 Jahren."></textarea>
+          <label for="about" data-i18n="profile.about">Kurze persönliche Beschreibung</label>
+          <textarea id="about" autocomplete="off" data-i18n-attr="placeholder:profile.aboutPh" placeholder="z. B. ruhig, ordentlich, Nichtraucher, festes Arbeitsverhältnis seit 4 Jahren."></textarea>
         </div>
       </details>
 
       <div class="row" style="margin-top:14px">
-        <button class="btn btn-primary" id="saveProfile" style="max-width:220px">Profil speichern</button>
-        <button class="btn btn-ghost" id="clearProfile">Zurücksetzen</button>
+        <button class="btn btn-primary" id="saveProfile" style="max-width:220px" data-i18n="profile.save">Profil speichern</button>
+        <button class="btn btn-ghost" id="clearProfile" data-i18n="profile.reset">Zurücksetzen</button>
       </div>
       <div class="saved-note" id="profileNote"></div>
     </div>
@@ -239,19 +267,21 @@
   <!-- ============ UNTERLAGEN ============ -->
   <section class="panel" id="tab-unterlagen">
     <div class="card">
-      <h2><span class="badge" data-icon="file"></span> Unterlagen</h2>
-      <p class="hint">Selbstauskunft als PDF erstellen und abhaken, was du beilegst. (Dateien lassen sich aus Sicherheitsgründen nicht automatisch anhängen – das machst du beim Senden selbst.)</p>
-      <button class="btn btn-primary" id="makeSelbstauskunft" type="button">Selbstauskunft als PDF erstellen</button>
+      <h2><span class="badge" data-icon="file"></span> <span data-i18n="docs.title">Unterlagen</span></h2>
+      <p class="hint" data-i18n="docs.hint">Selbstauskunft als PDF erstellen und abhaken, was du beilegst. (Dateien lassen sich aus Sicherheitsgründen nicht automatisch anhängen – das machst du beim Senden selbst.)</p>
+      <!-- Nur englisch: die Selbstauskunft ist bewusst ein deutsches Formular. -->
+      <p class="hint" data-i18n-only="en" data-i18n-html="docs.germanNote" hidden></p>
+      <button class="btn btn-primary" id="makeSelbstauskunft" type="button" data-i18n="docs.make">Selbstauskunft als PDF erstellen</button>
       <div class="saved-note" id="docHint"></div>
       <div style="margin-top:14px">
-        <label>Dokumenten-Checkliste</label>
+        <label data-i18n="docs.checklist">Dokumenten-Checkliste</label>
         <div id="checklist" class="checklist"></div>
         <!-- Schutz-Schalter: bei negativer/fehlender SCHUFA darf sie NIRGENDS
              auftauchen – nicht im Anschreiben (Vorlage UND KI) und nicht als
              Checklisten-Forderung. Stattdessen bietet die Liste die Bürgschaft an. -->
         <label class="check-item" style="margin-top:12px">
           <input type="checkbox" id="noSchufa">
-          <span><b>Meine SCHUFA ist negativ – oder ich habe keine.</b><br>
+          <span data-i18n-html="docs.noSchufaLabel"><b>Meine SCHUFA ist negativ – oder ich habe keine.</b><br>
           Die SCHUFA wird dann in deinen Anschreiben <b>nie</b> erwähnt und oben nicht mehr verlangt. Tipp: Eine Bürgschaft oder die Mietschuldenfreiheitsbescheinigung überzeugt Vermieter oft genauso.</span>
         </label>
       </div>
@@ -260,40 +290,40 @@
 
   <footer>
     <div class="footer-actions">
-      <a class="btn footer-btn" href="mailto:dvstiny21@gmail.com?subject=WohnungsBewerber%20Feedback&body=Hi!%20Mein%20Feedback%20zu%20WohnungsBewerber%3A%0A%0A"><span class="i" data-icon="mail"></span> Feedback geben</a>
-      <a class="btn footer-btn" id="rateBtn" target="_blank" rel="noopener" hidden><span class="i" data-icon="star"></span> Bewerten</a>
+      <a class="btn footer-btn" href="mailto:dvstiny21@gmail.com?subject=WohnungsBewerber%20Feedback&body=Hi!%20Mein%20Feedback%20zu%20WohnungsBewerber%3A%0A%0A"><span class="i" data-icon="mail"></span> <span data-i18n="footer.feedback">Feedback geben</span></a>
+      <a class="btn footer-btn" id="rateBtn" target="_blank" rel="noopener" hidden><span class="i" data-icon="star"></span> <span data-i18n="footer.rate">Bewerten</span></a>
     </div>
-    <p class="footer-note">Alle Daten bleiben lokal in deinem Browser. WohnungsBewerber sendet nie automatisch – du prüfst und bestätigst jede Nachricht selbst.</p>
+    <p class="footer-note" data-i18n="footer.note">Alle Daten bleiben lokal in deinem Browser. WohnungsBewerber sendet nie automatisch – du prüfst und bestätigst jede Nachricht selbst.</p>
   </footer>
 
   <!-- Experten-Extra: komplett optional, standardmäßig zugeklappt, nichts, was ein normaler Kunde je braucht. -->
   <details id="aiCard" style="margin-top:18px; opacity:.6; font-size:.78rem;">
-    <summary style="cursor:pointer; color:var(--muted); list-style:none;">Nur für Experten: eigene KI-Anbindung (optional) <span class="pill" id="aiPill" hidden>aktiv</span></summary>
+    <summary style="cursor:pointer; color:var(--muted); list-style:none;"><span data-i18n="ai.summary">Nur für Experten: eigene KI-Anbindung (optional)</span> <span class="pill" id="aiPill" hidden data-i18n="ai.active">aktiv</span></summary>
     <div style="margin-top:10px; padding:14px; border:1px dashed var(--border); border-radius:12px;">
-      <p class="hint" style="margin:0 0 12px">Nicht nötig – die App erstellt Anschreiben bereits ohne diese Einstellung, komplett kostenlos und ohne Internetverbindung. Nur aktivieren, wenn du selbst einen Claude-API-Schlüssel besitzt und weißt, dass dabei <strong>eigene Kosten bei dir</strong> entstehen (nicht beim Hersteller dieser Erweiterung).</p>
+      <p class="hint" style="margin:0 0 12px" data-i18n-html="ai.hint">Nicht nötig – die App erstellt Anschreiben bereits ohne diese Einstellung, komplett kostenlos und ohne Internetverbindung. Nur aktivieren, wenn du selbst einen Claude-API-Schlüssel besitzt und weißt, dass dabei <strong>eigene Kosten bei dir</strong> entstehen (nicht beim Hersteller dieser Erweiterung).</p>
       <div class="field">
-        <label for="aiMode">Modus</label>
+        <label for="aiMode" data-i18n="ai.mode">Modus</label>
         <select id="aiMode">
-          <option value="off">Aus – eingebaute Vorlage nutzen (Standard)</option>
-          <option value="anthropic">Claude direkt (eigener API-Schlüssel)</option>
+          <option value="off" data-i18n="ai.modeOff">Aus – eingebaute Vorlage nutzen (Standard)</option>
+          <option value="anthropic" data-i18n="ai.modeAnthropic">Claude direkt (eigener API-Schlüssel)</option>
         </select>
       </div>
       <div class="field" id="aiKeyWrap" hidden>
-        <label for="aiKey">Claude API-Schlüssel</label>
+        <label for="aiKey" data-i18n="ai.key">Claude API-Schlüssel</label>
         <input id="aiKey" type="password" autocomplete="off" placeholder="sk-ant-…">
-        <p class="hint" style="margin-top:6px">Wird nur lokal in diesem Browser gespeichert.</p>
+        <p class="hint" style="margin-top:6px" data-i18n="ai.keyHint">Wird nur lokal in diesem Browser gespeichert.</p>
       </div>
       <div class="field" id="aiModelWrap" hidden>
-        <label for="aiModel">Modell</label>
+        <label for="aiModel" data-i18n="ai.model">Modell</label>
         <select id="aiModel">
-          <option value="claude-haiku-4-5">Haiku 4.5 – günstig &amp; schnell (empfohlen)</option>
-          <option value="claude-sonnet-5">Sonnet 5 – höhere Qualität</option>
-          <option value="claude-opus-4-8">Opus 4.8 – beste Qualität</option>
+          <option value="claude-haiku-4-5" data-i18n-html="ai.modelHaiku">Haiku 4.5 – günstig &amp; schnell (empfohlen)</option>
+          <option value="claude-sonnet-5" data-i18n="ai.modelSonnet">Sonnet 5 – höhere Qualität</option>
+          <option value="claude-opus-4-8" data-i18n="ai.modelOpus">Opus 4.8 – beste Qualität</option>
         </select>
       </div>
       <div class="row" style="margin-top:8px">
-        <button class="btn btn-primary" id="aiSave" style="max-width:200px">Speichern</button>
-        <button class="btn" id="aiTest" type="button">KI testen</button>
+        <button class="btn btn-primary" id="aiSave" style="max-width:200px" data-i18n="ai.save">Speichern</button>
+        <button class="btn" id="aiTest" type="button" data-i18n="ai.test">KI testen</button>
       </div>
       <div id="aiStatus" class="form-status" aria-live="polite"></div>
     </div>
@@ -303,12 +333,14 @@
 <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
 <script src="lib/config.js"></script>
+<script src="lib/i18n.js"></script>
 <script src="lib/icons.js"></script>
 <script src="lib/parse.js"></script>
 <script src="lib/salutation.js"></script>
 <script src="lib/letter.js"></script>
 <script src="lib/portals.js"></script>
 <script src="lib/store.js"></script>
+<script src="lib/stats.js"></script>
 <script src="lib/ai.js"></script>
 <script src="dashboard.js"></script>
 </body>

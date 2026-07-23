@@ -11,7 +11,7 @@
    (siehe ausführliche Invariante am Kopf von content.js). */
 "use strict";
 
-importScripts("lib/config.js", "lib/parse.js", "lib/salutation.js", "lib/letter.js", "lib/store.js", "lib/ai.js");
+importScripts("lib/config.js", "lib/i18n.js", "lib/parse.js", "lib/salutation.js", "lib/letter.js", "lib/store.js", "lib/ai.js");
 
 function openOrFocusDashboard(hash) {
   const base = chrome.runtime.getURL("dashboard.html");
@@ -59,6 +59,20 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   return false;
 });
 
+// Oberflächensprache EINMAL festschreiben, damit sie nie „springt":
+//  - Neuinstallation: keine Festlegung → lib/i18n.js nimmt die Browsersprache
+//    (englischer Browser ⇒ englische Oberfläche, genau die Expat-Zielgruppe).
+//  - Update einer bestehenden Installation: hart auf Deutsch. Wer die Erweiterung
+//    schon nutzt, hat sie auf Deutsch installiert und soll nach einem Update nicht
+//    plötzlich vor englischen Knöpfen sitzen, nur weil Chrome englisch eingestellt ist.
+async function pinLanguageOnUpdate() {
+  try {
+    if (await WBA.store.getLang()) return; // Nutzer hat bereits selbst gewählt
+    await WBA.store.setLang("de");
+  } catch (e) { if (WBA.log) WBA.log.debug("Sprache konnte nicht festgeschrieben werden:", e); }
+}
+
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === "install") openOrFocusDashboard("profil");
+  else if (details.reason === "update") pinLanguageOnUpdate();
 });

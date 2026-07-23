@@ -6,20 +6,26 @@
 (function () {
   "use strict";
 
-  /* ---------- Modul laden (Node ODER macOS JXA/JavaScriptCore) ---------- */
+  /* ---------- Module laden (Node ODER macOS JXA/JavaScriptCore) ----------
+     i18n.js zuerst: badge() holt seine Beschreibungstexte dort (Standard „de“,
+     solange niemand init()/setLang() ruft – die Erwartungen unten sind deutsch). */
   var isNode = typeof process !== "undefined" && process.versions && process.versions.node;
-  var src, G = (typeof globalThis !== "undefined") ? globalThis : this;
+  var G = (typeof globalThis !== "undefined") ? globalThis : this;
+  var readLib;
   if (isNode) {
     var path = require("path"), fs = require("fs");
-    src = fs.readFileSync(path.join(__dirname, "..", "lib", "salutation.js"), "utf8");
+    readLib = function (f) { return fs.readFileSync(path.join(__dirname, "..", "lib", f), "utf8"); };
   } else {
     ObjC.import("Foundation");
     var cwd = $.NSFileManager.defaultManager.currentDirectoryPath.js;
-    src = $.NSString.stringWithContentsOfFileEncodingError(cwd + "/lib/salutation.js", $.NSUTF8StringEncoding, null).js;
+    readLib = function (f) {
+      return $.NSString.stringWithContentsOfFileEncodingError(cwd + "/lib/" + f, $.NSUTF8StringEncoding, null).js;
+    };
   }
   G.self = G;
-  (new Function(src)).call(G);
+  ["i18n.js", "salutation.js"].forEach(function (f) { (new Function(readLib(f))).call(G); });
   var S = G.WBA.salutation;
+  var I = G.WBA.i18n;
 
   /* ---------- Mini-Testrunner ---------- */
   var failures = [], count = 0;
@@ -125,6 +131,18 @@
     { ok: false, text: "unsicher: „Max Mustermann“ – Anrede bitte wählen" });
   eq("57 Badge Firma", S.badge(S.classify("Musterhaus GmbH")), { ok: true, text: "Firma erkannt – neutrale Anrede" });
   eq("57b Badge neutral ohne Namensdaten", S.badge(S.classify("")), { ok: false, text: "neutral, da unsicher" });
+
+  /* Englische Oberfläche: NUR der beschreibende Teil wechselt – „Frau/Herr" bleibt
+     deutsch, weil genau dieses Wort so im erzeugten Brief steht.
+     (setLang wirkt sofort; nur das Speichern dahinter ist asynchron.) */
+  I.setLang("en");
+  eq("57c Badge EN behält die deutsche Anrede", S.badge(S.classify("Frau Müller")),
+    { ok: true, text: "detected: Frau Müller" });
+  eq("57d Badge EN neutral", S.badge(S.classify("")), { ok: false, text: "neutral, because unsure" });
+  eq("57e Anrede im Brief bleibt IMMER deutsch", S.greeting(S.classify("Frau Müller"), "standard"),
+    "Sehr geehrte Frau Müller,");
+  I.setLang("de");
+  eq("57f Zurück auf Deutsch", S.badge(S.classify("")).text, "neutral, da unsicher");
 
   /* =========================================================================
      Regression (Live-Befunde 2.0.0): Vorname-als-Nachname & Korrektur-Daten

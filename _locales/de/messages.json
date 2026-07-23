@@ -1,0 +1,14 @@
+{
+  "extName": {
+    "message": "WohnungsBewerber",
+    "description": "Name der Erweiterung im Chrome Web Store und in der Toolbar."
+  },
+  "extDescription": {
+    "message": "Findet Wohnungen und bereitet deine Bewerbung vor. Du prüfst und sendest selbst. Lokal, kostenlos, keine Datenweitergabe.",
+    "description": "Kurzbeschreibung (max. 132 Zeichen) unter dem Namen im Store."
+  },
+  "actionTitle": {
+    "message": "WohnungsBewerber öffnen",
+    "description": "Tooltip des Symbols in der Chrome-Toolbar."
+  }
+}

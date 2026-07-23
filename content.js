@@ -27,12 +27,20 @@
   const dom = portals.dom;
   const CFG = WBA.CONFIG || {};
   const log = WBA.log || console;
+  const i18n = WBA.i18n;
+  // Oberflächensprache des Overlays. Der ANSCHREIBEN-TEXT bleibt immer deutsch –
+  // er geht an die Vermietung (Invariante in lib/i18n.js).
+  const tr = (k, p) => i18n.t(k, p);
   // Build-Kennung: macht auf einen Blick (Konsole + Overlay) erkennbar, ob nach einem
   // Update wirklich die NEUE Version läuft. Wichtig, weil Content-Scripts in bereits
   // offenen Tabs erst nach einem Tab-Reload neu injiziert werden.
   const BUILD = (function () { try { return chrome.runtime.getManifest().version; } catch (e) { return "?"; } })();
   try { log.info("Build " + BUILD + " aktiv auf " + portal.name); } catch (e) {}
   let host, shadow, panel;
+  // Letzte Overlay-Ansicht als Neuzeichen-Funktion. Wird der Sprachschalter im
+  // Dashboard umgelegt, während hier ein Portal-Tab offen ist, soll das Overlay
+  // sofort mitwechseln, statt bis zur nächsten Anzeige deutsch zu bleiben.
+  let lastRender = null;
   let generated = "";
   let currentSalut = null; // aktuelle Anrede-Klassifikation (WBA.salutation), vom Nutzer korrigierbar
   let state = { run: null, profile: {}, filters: {}, aiReady: false, docs: {} };
@@ -72,8 +80,8 @@
     return '<div class="hd"><span class="logo">' + ic("home", 14) + '</span><span>WohnungsBewerber</span>' +
       (opts.ver ? '<span class="ver">v' + esc(BUILD) + "</span>" : "") +
       '<span class="grow"></span>' +
-      (opts.min ? '<button class="ic" data-act="min" title="Minimieren">' + ic("minus", 14) + "</button>" : "") +
-      '<button class="ic" data-act="close" title="Schließen">' + ic("x", 14) + "</button></div>";
+      (opts.min ? '<button class="ic" data-act="min" title="' + esc(tr("ov.minimize")) + '">' + ic("minus", 14) + "</button>" : "") +
+      '<button class="ic" data-act="close" title="' + esc(tr("ov.close")) + '">' + ic("x", 14) + "</button></div>";
   }
 
   /* ---------- Overlay-Gerüst (Shadow DOM, damit Portal-CSS nicht stört) ----------
@@ -162,7 +170,19 @@
     panel = document.createElement("div"); shadow.appendChild(panel);
     (document.body || document.documentElement).appendChild(host);
   }
-  function removeHost() { if (host) { host.remove(); host = null; } }
+  function removeHost() { if (host) { host.remove(); host = null; } lastRender = null; }
+
+  // Sprachwechsel aus einem anderen Kontext (Dashboard) → aktuelle Ansicht neu
+  // zeichnen. Der Entwurf selbst bleibt deutsch und darf dabei NICHT verloren
+  // gehen: von Hand geänderten Text vorher aus dem Textfeld zurückholen.
+  i18n.onChange(() => {
+    if (!host || !lastRender) return;
+    try {
+      const ta = panel && panel.querySelector('[data-el="ta"]');
+      if (ta) generated = ta.value;
+      lastRender();
+    } catch (e) { log.debug("Overlay-Neuaufbau nach Sprachwechsel:", e); }
+  });
 
   /* ---------- Dashboard öffnen (robust) ---------- */
   // Nach einem Extension-Update sind Content-Scripts in offenen Tabs „verwaist":
@@ -172,7 +192,7 @@
     try {
       chrome.runtime.sendMessage({ type: "openDashboard", hash }, () => { void chrome.runtime.lastError; });
     } catch (e) {
-      flashMsg("Die Erweiterung wurde aktualisiert – bitte die Seite neu laden.", true);
+      flashMsg(tr("ov.updated"), true);
     }
   }
 
@@ -215,19 +235,20 @@
     if (!results.length) return; // nichts erkannt → still bleiben
     mountHost();
     panel.dataset.view = "results";
+    lastRender = () => handleResults();
     const resumable = state.run && state.run.active && state.run.portal === portal.id;
     panel.innerHTML = `
       <div class="box">
         ${headHtml()}
         <div class="bd">
-          <p class="prog">${results.length} Anzeigen gefunden</p>
-          <p style="font-size:12.5px;margin:0 0 4px">Der Assistent öffnet die Anzeigen nacheinander und bereitet dein Anschreiben vor. Du prüfst und sendest jede Nachricht selbst.</p>
-          ${resumable ? '<div class="msg ok">Ein Durchlauf läuft bereits – du kannst ihn fortsetzen.</div>' : ''}
+          <p class="prog">${esc(tr("ov.found", { n: results.length }))}</p>
+          <p style="font-size:12.5px;margin:0 0 4px">${esc(tr("ov.foundText"))}</p>
+          ${resumable ? '<div class="msg ok">' + esc(tr("ov.resumable")) + '</div>' : ''}
           <div class="row">
-            <button class="b primary" data-act="start">${ic("play")} Durchlauf starten (${results.length})</button>
-            ${resumable ? '<button class="b" data-act="resume">' + ic("refresh") + ' Fortsetzen</button>' : ''}
+            <button class="b primary" data-act="start">${ic("play")} ${esc(tr("ov.start", { n: results.length }))}</button>
+            ${resumable ? '<button class="b" data-act="resume">' + ic("refresh") + " " + esc(tr("ov.resume")) + '</button>' : ''}
           </div>
-          <p class="foot">Du musst auf dem Portal eingeloggt sein, um Nachrichten zu senden. Bei ImmoScout &amp; Immowelt kann der Bot-Schutz bremsen.</p>
+          <p class="foot">${tr("ov.resultsFoot")}</p>
         </div>
       </div>`;
     panel.querySelector('[data-act="close"]').onclick = removeHost;
@@ -377,7 +398,7 @@
 
   function chipsHtml(info) {
     const c = [];
-    if (info.zimmer) c.push(info.zimmer + " Zi.");
+    if (info.zimmer) c.push(tr("chip.roomsShort", { n: info.zimmer }));
     if (info.groesse) c.push(info.groesse + " m²");
     if (info.preis) c.push(info.preis + (info.preisLabel && info.preisLabel !== "Miete" ? " " + info.preisLabel : ""));
     if (info.ort) c.push(info.ort);
@@ -386,6 +407,8 @@
 
   // Auswahl-Optionen für die Anrede-Korrektur: nur Varianten anbieten, für die
   // Daten vorliegen (Name/Vorname) – plus immer die neutrale Anrede.
+  // „Frau/Herr/Familie" bleiben auch in der englischen Oberfläche deutsch: es ist
+  // exakt das Wort, das anschließend im Brief steht.
   function salutOptionsHtml() {
     const c = currentSalut || { category: "neutral" };
     const opts = [];
@@ -394,8 +417,8 @@
       opts.push(["herr", "Herr " + c.name]);
       opts.push(["familie", "Familie " + c.name]);
     }
-    if (c.vorname) opts.push(["vorname", "Hallo " + c.vorname]);
-    opts.push(["neutral", "Neutral (ohne Namen)"]);
+    if (c.vorname) opts.push(["vorname", tr("ov.salutHallo", { name: c.vorname })]);
+    opts.push(["neutral", tr("ov.salutNeutral")]);
     const sel = opts.some(([v]) => v === c.category) ? c.category : "neutral";
     return opts.map(([v, l]) => '<option value="' + v + '"' + (v === sel ? " selected" : "") + ">" + esc(l) + "</option>").join("");
   }
@@ -412,13 +435,14 @@
   function renderListingOverlay(o) {
     mountHost();
     panel.dataset.view = "listing";
-    const prog = o.run && o.qIndex >= 0 ? `Anzeige ${o.qIndex + 1} / ${o.queueLen}` : "Einzelne Anzeige";
+    lastRender = () => renderListingOverlay(o);
+    const prog = o.run && o.qIndex >= 0 ? tr("ov.progress", { i: o.qIndex + 1, n: o.queueLen }) : tr("ov.single");
     const sb = WBA.salutation.badge(currentSalut);
-    let statusMsg = "";
-    if (!o.hasProfile) statusMsg = '<div class="msg warn">Bitte fülle zuerst dein Profil aus, dann kann ich das Anschreiben erstellen.</div>';
-    else if (o.filled) statusMsg = '<div class="msg ok">✓ Anschreiben ins Kontaktformular eingefügt. Bitte prüfen und selbst senden.</div>';
-    else if (o.hadText) statusMsg = '<div class="msg warn">Im Nachrichtenfeld steht bereits Text – ich habe nichts überschrieben. „Einfügen" ersetzt ihn durch diesen Entwurf.</div>';
-    else statusMsg = '<div class="msg warn">Kontaktformular nicht gefunden. Öffne es auf der Seite oder füge das Anschreiben unten manuell ein.</div>';
+    let statusKey = "ov.noForm";
+    if (!o.hasProfile) statusKey = "ov.noProfile";
+    else if (o.filled) statusKey = "ov.filled";
+    else if (o.hadText) statusKey = "ov.hadText";
+    const statusMsg = '<div class="msg ' + (o.filled ? "ok" : "warn") + '">' + esc(tr(statusKey)) + "</div>";
 
     panel.innerHTML = `
       <div class="box">
@@ -426,17 +450,17 @@
         <div class="bd">
           <p class="prog">${esc(prog)}</p>
           <div class="chips">${chipsHtml(o.info)}</div>
-          ${o.hasProfile ? '<div class="salut"><span class="lbl ' + (sb.ok ? "ok" : "warn") + '" title="Erkannte Anrede – falsche Anreden werden nie geraten">' + ic("mail", 12) + " " + esc(sb.text) + '</span><select data-el="salutSel" title="Anrede korrigieren">' + salutOptionsHtml() + "</select></div>" : ""}
+          ${o.hasProfile ? '<div class="salut"><span class="lbl ' + (sb.ok ? "ok" : "warn") + '" title="' + esc(tr("ov.salutTitle")) + '">' + ic("mail", 12) + " " + esc(sb.text) + '</span><select data-el="salutSel" title="' + esc(tr("ov.salutCorrect")) + '">' + salutOptionsHtml() + "</select></div>" : ""}
           ${o.hasProfile ? '<textarea data-el="ta">' + esc(generated) + "</textarea>" : ""}
           ${statusMsg}
           ${o.hasProfile
-            ? '<div class="tools"><button class="b sm" data-act="insert">' + ic("clipboard", 12) + ' Einfügen</button><button class="b sm" data-act="reroll">' + ic("refresh", 12) + ' Neu</button><button class="b sm" data-act="copy">' + ic("copy", 12) + " Kopieren</button></div>"
-            : '<div class="row"><button class="b primary" data-act="profile">Profil ausfüllen</button></div>'}
-          ${o.hasProfile ? '<div class="row"><button class="b primary" data-act="send">' + ic("send") + " Prüfen &amp; senden</button></div>" : ""}
+            ? '<div class="tools"><button class="b sm" data-act="insert">' + ic("clipboard", 12) + " " + esc(tr("ov.insert")) + '</button><button class="b sm" data-act="reroll">' + ic("refresh", 12) + " " + esc(tr("ov.new")) + '</button><button class="b sm" data-act="copy">' + ic("copy", 12) + " " + esc(tr("ov.copy")) + "</button></div>"
+            : '<div class="row"><button class="b primary" data-act="profile">' + esc(tr("ov.fillProfile")) + "</button></div>"}
+          ${o.hasProfile ? '<div class="row"><button class="b primary" data-act="send">' + ic("send") + " " + tr("ov.send") + "</button></div>" : ""}
           ${o.run
-            ? '<div class="row"><button class="b go" data-act="next">' + ic("check") + ' Gesendet · Nächste</button><button class="b sm" data-act="skip" style="flex:0 1 auto">' + ic("skipForward", 12) + ' Überspringen</button></div><button class="link" data-act="stop">Durchlauf stoppen</button>'
-            : (o.hasProfile ? '<div class="row"><button class="b go" data-act="markSent">' + ic("check") + ' Als beworben markieren</button></div>' : '')}
-          <p class="foot">Der Assistent sendet nie selbst. Du klickst den echten „Senden"-Knopf der Seite.</p>
+            ? '<div class="row"><button class="b go" data-act="next">' + ic("check") + " " + esc(tr("ov.nextSent")) + '</button><button class="b sm" data-act="skip" style="flex:0 1 auto">' + ic("skipForward", 12) + " " + esc(tr("ov.skip")) + '</button></div><button class="link" data-act="stop">' + esc(tr("ov.stop")) + "</button>"
+            : (o.hasProfile ? '<div class="row"><button class="b go" data-act="markSent">' + ic("check") + " " + esc(tr("ov.markSent")) + "</button></div>" : '')}
+          <p class="foot">${esc(tr("ov.foot"))}</p>
         </div>
       </div>`;
 
@@ -455,14 +479,14 @@
       const t = ta();
       if (t) { t.value = replaceGreetingLine(t.value, g); generated = t.value; }
       setDraftIntoForm(dom.findMessageBox(portal, document), generated);
-      flashMsg("✓ Anrede angepasst: „" + g + "\"");
+      flashMsg(tr("ov.salutChanged", { g }));
     };
     on("profile", () => openDashboard("profil"));
     on("insert", () => {
       const box = dom.findMessageBox(portal, document) || (dom.revealContactForm(portal, document), dom.findMessageBox(portal, document));
       // force: der explizite Klick ist die bewusste Nutzer-Entscheidung zu ersetzen.
-      if (box && ta()) { setDraftIntoForm(box, ta().value, true); dom.fillProfileFields(portal, document, state.profile); highlightSend(); flashMsg("✓ Eingefügt. Bitte prüfen und senden."); }
-      else flashMsg("Kein Formular gefunden – bitte manuell einfügen.", true);
+      if (box && ta()) { setDraftIntoForm(box, ta().value, true); dom.fillProfileFields(portal, document, state.profile); highlightSend(); flashMsg(tr("ov.inserted")); }
+      else flashMsg(tr("ov.noFormFound"), true);
     });
     on("reroll", async () => {
       const cf = currentFlat();
@@ -473,7 +497,7 @@
       // auch ins echte Formular übernehmen – aber nur, wenn dort UNSER Text steht
       setDraftIntoForm(dom.findMessageBox(portal, document), generated);
     });
-    on("copy", async () => { try { await navigator.clipboard.writeText(ta() ? ta().value : generated); flashMsg("✓ Kopiert."); } catch (e) { flashMsg("Kopieren nicht möglich – Text markieren.", true); } });
+    on("copy", async () => { try { await navigator.clipboard.writeText(ta() ? ta().value : generated); flashMsg(tr("ov.copied")); } catch (e) { flashMsg(tr("ov.copyFailed"), true); } });
     on("send", scrollToSend);
     on("markSent", async () => {
       await store.upsertTracker({
@@ -482,8 +506,8 @@
         ort: o.info.ort || "", qm: o.info.groesse || "", preis: o.info.preis || "",
         ton: (state.run && state.run.tone) || state.filters.ton || "standard", status: "beworben",
       });
-      flashMsg("✓ Als beworben gemerkt – viel Erfolg!");
-      const b = panel.querySelector('[data-act="markSent"]'); if (b) { b.textContent = "✓ Beworben"; b.style.opacity = ".7"; }
+      flashMsg(tr("ov.markedMsg"));
+      const b = panel.querySelector('[data-act="markSent"]'); if (b) { b.textContent = tr("ov.marked"); b.style.opacity = ".7"; }
     });
     on("skip", () => advance("übersprungen"));
     on("next", () => advance("beworben"));
@@ -521,9 +545,10 @@
   function alertDone() {
     mountHost();
     panel.dataset.view = "done";
+    lastRender = alertDone;
     panel.innerHTML = `<div class="box">${headHtml()}
-      <div class="bd"><div class="msg ok" style="margin-top:0">Durchlauf abgeschlossen – alle Anzeigen dieser Liste sind durch. Öffne die Zentrale für den Überblick.</div>
-      <div class="row"><button class="b primary" data-act="dash">${ic("inbox")} Zu den Bewerbungen</button></div></div></div>`;
+      <div class="bd"><div class="msg ok" style="margin-top:0">${esc(tr("ov.doneMsg"))}</div>
+      <div class="row"><button class="b primary" data-act="dash">${ic("inbox")} ${esc(tr("ov.toApplications"))}</button></div></div></div>`;
     panel.querySelector('[data-act="close"]').onclick = removeHost;
     panel.querySelector('[data-act="dash"]').onclick = () => openDashboard("bewerbungen");
   }
@@ -535,14 +560,15 @@
     const parts = [];
     if (filters) {
       if (filters.ort) parts.push(filters.ort);
-      if (filters.qmMin) parts.push("ab " + filters.qmMin + " m²");
-      if (filters.preisMax) parts.push("bis " + filters.preisMax + " €");
+      if (filters.qmMin) parts.push(tr("ov.filterFrom", { n: filters.qmMin }));
+      if (filters.preisMax) parts.push(tr("ov.filterUpTo", { n: filters.preisMax }));
     }
     panel.dataset.view = "hint";
+    lastRender = () => showSearchHint(filters);
     panel.innerHTML = '<div class="box">' + headHtml() +
-      '<div class="bd"><div class="msg warn" style="margin-top:0">Ich konnte die Suche hier nicht automatisch ausfüllen. Bitte gib deine Suche oben auf der Seite ein' +
-      (parts.length ? ' – deine Filter: <b>' + esc(parts.join(" · ")) + '</b>' : '') +
-      '. Sobald Treffer erscheinen, bereite ich jede Anzeige für dich vor.</div></div></div>';
+      '<div class="bd"><div class="msg warn" style="margin-top:0">' + esc(tr("ov.searchHint")) +
+      (parts.length ? tr("ov.searchHintFilters", { filters: esc(parts.join(" · ")) }) : '') +
+      esc(tr("ov.searchHintEnd")) + '</div></div></div>';
     panel.querySelector('[data-act="close"]').onclick = removeHost;
     // Nur den Hinweis selbst wegräumen – ist inzwischen ein anderes Overlay
     // gemountet (SPA-Navigation zur Anzeige), darf der Timer es nicht entfernen.
@@ -620,6 +646,7 @@
   }
 
   async function init() {
+    await i18n.init(); // Oberflächensprache vor dem ersten Overlay-Aufbau
     state.filters = await store.getFilters();
     const pending = await store.getPending();
     let triedSearch = false;
