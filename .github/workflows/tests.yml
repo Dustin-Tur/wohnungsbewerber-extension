@@ -1,0 +1,39 @@
+# Führt die Testsuiten bei jedem Push automatisch aus.
+#
+# Hintergrund: Auf dem Entwicklungsrechner ist kein node installiert, die Tests
+# laufen dort über `osascript -l JavaScript`. Jede Testdatei kann beides (siehe
+# die isNode-Weiche in ihrem Kopf) – der Runner hier nimmt den node-Weg.
+# Es gibt bewusst keine Abhängigkeiten und kein package.json: das Projekt kommt
+# ohne Fremdpakete aus, und das soll so bleiben (beste Supply-Chain-Lage).
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch: # erlaubt den Start von Hand über den Actions-Reiter
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Testsuiten ausführen
+        run: |
+          fail=0
+          for f in tests/*.test.js; do
+            echo "──────── $f"
+            # || fail=1 statt Abbruch: Es sollen ALLE Suiten laufen, damit ein
+            # Fehlschlag nicht die Ergebnisse der übrigen verdeckt.
+            node "$f" || fail=1
+          done
+          echo "────────"
+          if [ "$fail" -ne 0 ]; then
+            echo "Mindestens eine Suite ist fehlgeschlagen."
+            exit 1
+          fi
+          echo "Alle Suiten bestanden."
