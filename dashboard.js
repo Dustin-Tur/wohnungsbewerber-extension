@@ -827,6 +827,7 @@
       const item = document.createElement("div"); item.className = "tracker-item";
       const main = document.createElement("div"); main.className = "ti-main";
       const title = document.createElement("p"); title.className = "ti-title"; title.textContent = e.title || e.flatSummary || tr("letter.flat");
+      title.title = e.title || ""; // UX-10: abgeschnittene Titel per Hover vollständig lesbar
       const meta = document.createElement("div"); meta.className = "ti-meta";
       const portalName = (portals.byId(e.portal) || {}).name || e.portal || "";
       meta.textContent = [portalName, e.ort, e.qm ? e.qm + " m²" : "", e.preis, relTime(e.ts || Date.now())].filter(Boolean).join(" · ");
