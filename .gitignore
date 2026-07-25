@@ -24,3 +24,6 @@ VEROEFFENTLICHEN.md
 # Sitzungsprotokolle: enthalten Strategie-, Geld- und Deploy-Pläne.
 # Das Repo ist öffentlich – solche Notizen gehören nicht hinein.
 SESSION-*.md
+
+# Build-Ausgabe (QUA-11): ZIPs entstehen reproduzierbar aus dem Repo-Stand
+dist/
