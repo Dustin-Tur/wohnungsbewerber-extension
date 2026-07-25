@@ -931,6 +931,16 @@
       consentTs: aiConsentTs,
     };
   }
+  // EXT-04: Der Anthropic-Host ist nur noch eine OPTIONALE Berechtigung – sie wird
+  // erst beim Aktivieren der KI erbeten, statt bei der Installation von allen.
+  async function ensureAnthropicPermission() {
+    try {
+      if (typeof chrome === "undefined" || !chrome.permissions) return true; // Test-/Stub-Kontext
+      const origins = { origins: ["https://api.anthropic.com/*"] };
+      if (await chrome.permissions.contains(origins)) return true;
+      return await chrome.permissions.request(origins);
+    } catch (e) { (WBA.log || console).warn("permissions.request:", e); return false; }
+  }
   // Ohne bestätigten Datenhinweis wird der Anthropic-Modus nicht gespeichert –
   // erst die Checkbox macht aus dem Umstellen eine informierte Einwilligung.
   function aiConsentGiven(s) {
@@ -946,6 +956,10 @@
     const st = $("aiStatus");
     if (!aiConsentGiven(s)) {
       st.className = "form-status error"; st.textContent = tr("ai.consentRequired");
+      return;
+    }
+    if (s.mode === "anthropic" && !(await ensureAnthropicPermission())) {
+      st.className = "form-status error"; st.textContent = tr("ai.permissionRequired");
       return;
     }
     try { await store.setSettings(s); }
@@ -973,6 +987,10 @@
     const s = readSettings();
     const st = $("aiStatus");
     if (!aiConsentGiven(s)) { st.className = "form-status error"; st.textContent = tr("ai.consentRequired"); return; }
+    if (s.mode === "anthropic" && !(await ensureAnthropicPermission())) {
+      st.className = "form-status error"; st.textContent = tr("ai.permissionRequired");
+      return;
+    }
     try { await store.setSettings(s); }
     catch (e) { st.className = "form-status error"; st.textContent = tr("err.save", { err: (e && e.message) || String(e) }); return; }
     const btn = $("aiTest");

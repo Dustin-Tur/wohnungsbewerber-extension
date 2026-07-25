@@ -29,9 +29,9 @@
     "https://www.kleinanzeigen.de/*",
     "https://www.immobilienscout24.de/*",
     "https://www.immowelt.de/*",
-    "https://www.immonet.de/*",
-    "https://api.anthropic.com/*"
+    "https://www.immonet.de/*"
   ],
+  "optional_host_permissions": ["https://api.anthropic.com/*"],
   "content_scripts": [
     {
       "matches": [
