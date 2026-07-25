@@ -1,6 +1,69 @@
 # CHANGELOG — WohnungsBewerber
 
 Referenzen wie „A1", „B4" verweisen auf die Befund-Nummern in `AUDIT.md`.
+Referenzen wie „SEC-01", „FUN-03" (ab 2.7.0) sind die Befund-IDs des
+Voll-Audits vom 25.07.2026; sie stehen auch in den Commit-Betreffs.
+
+## 2.7.0 — 2026-07-26 · Audit-Umsetzung: Sicherheit, Verlässlichkeit, Datenrechte
+
+57 von 70 Befunden eines vollständigen Audits behoben (6 Umsetzungswellen).
+Kein neues Feature, dafür ein in fast jeder Schicht solideres Produkt. Die
+Produkt-Invarianten sind unangetastet: alles lokal, kein Server, keine
+Telemetrie, null Abhängigkeiten, es wird nie automatisch gesendet.
+
+**Für Bestandsnutzer wichtig:** Die Anthropic-Anbindung ist jetzt eine
+*optionale* Berechtigung (EXT-04). Wer die KI-Funktion nutzt, muss die
+Einstellungen einmal neu speichern und die Berechtigung im Chrome-Dialog
+bestätigen — vorher macht die KI schlicht nichts.
+
+- **Berechtigungen minimiert:** `scripting` komplett entfernt (EXT-03, „Aus
+  offener Anzeige laden" läuft jetzt über eine Nachricht an das ohnehin
+  vorhandene Content-Script), Anthropic-Host von Pflicht auf optional
+  (EXT-04), Host-Zugriff von Subdomain-Wildcards auf konkrete `www.`-Hosts
+  eingeengt (EXT-01), `chrome.tabs.query` liest nur noch Portal-Tabs statt
+  aller offenen Tabs (EXT-02), Absender-Validierung im Service-Worker (EXT-05).
+- **Autofill gezähmt:** Profildaten landen nur noch in sichtbaren Feldern
+  innerhalb des Kontaktformulars — nicht mehr in versteckten oder
+  seitengesteuerten Feldern irgendwo auf der Portalseite (SEC-01).
+- **Es wird noch weniger automatisch:** Die Portal-Suchmaske wird nicht mehr
+  selbsttätig abgeschickt, sondern erst nach Bestätigung im Overlay (EXT-10);
+  der Durchlauf navigiert mit Zufallspausen statt im Maschinentakt (EXT-11).
+- **Datenrechte eingelöst:** „Alle Daten löschen" löscht wirklich alles
+  Personenbezogene (LEG-01), vollständiger JSON-Export **und** -Import
+  (LEG-12, QUA-05), Verlauf und Anzeigen-URLs verfallen nach 90 Tagen plus
+  Aufräumknopf im Tracker (LEG-13), KI-Aktivierung nur noch mit
+  Einwilligungs-Checkbox (LEG-03).
+- **KI-Härtung:** Anzeigentext wandert als abgegrenzter Datenblock in den
+  Prompt statt als Anweisungstext (SEC-02), Kostenbremse fragt ab 5 Aufrufen
+  pro Durchlauf nach (SEC-03), keine Klarnamen Dritter mehr in der Konsole
+  (SEC-07).
+- **Tracker verlässlich:** Speicherfehler werden gemeldet statt verschluckt
+  (FUN-03), ein tab-übergreifender Write-Lock verhindert verlorene Einträge
+  bei parallelen Tabs (FUN-02, eigener Nebenläufigkeits-Test QUA-03), ein
+  Wiederbesuch stuft Beworbenes nicht mehr zurück (FUN-01), bereits Beworbenes
+  landet nicht erneut in der Queue (FUN-05), alte Suchaufträge verfallen nach
+  10 Minuten (FUN-04), Fehlklicks bei „Antwort erhalten" sind korrigierbar
+  (FUN-15), dazu FUN-09–14 (Kopier-Rückmeldung, Demo-Persistenz, Sprach-Reset,
+  Overlay-„Neu"-Knopf, Mietrechner-Dezimalfehler, SPA-Reste).
+- **Anschreiben-Grammatik:** Bei genau einer vorbereiteten Unterlage steht das
+  Verb jetzt im Singular — „meine Selbstauskunft liegt bereit" statt „liegen"
+  (FUN-07, mit deterministischen Kongruenz-Tests).
+- **Frühwarnsystem:** Ein lokaler Selbsttest zählt je Portal, wie oft eine
+  Anzeigenseite ohne Kontaktformular endet, und warnt im Dashboard ab 5
+  Fehlschlägen — so fällt ein Portal-Umbau auf, bevor Support-Mails kommen
+  (QUA-06).
+- **Bedienbarkeit:** motivierender Profil-Fortschritt über Kernfelder (UX-04),
+  Browser-Autofill wieder erlaubt mit echten autocomplete-Tokens (UX-05),
+  Browser-Zurück wechselt den Reiter statt die App zu verlassen (UX-07),
+  kompakter Tracker im schmalen Fenster (UX-03), Status nur noch einmal und
+  bedienbar (UX-09), Titel-Tooltips (UX-10), Pluralfehler behoben (UX-11).
+- **Werkzeug & Betrieb:** reproduzierbares Store-ZIP per `build-store-zip.sh`
+  (QUA-11), ESLint-Lauf in der CI als reines Entwicklungswerkzeug (QUA-09),
+  toter Code entfernt (QUA-07), Design-Tokens JS-seitig konsolidiert
+  (UX-08/QUA-08).
+- Die Website-Änderungen (echter Engine-Generator QUA-04, CSP ohne
+  `unsafe-inline` SEC-05, HSTS SEC-04, Mietrechner FUN-13, UX-01/02/06/12)
+  liegen im separaten landing-Repo.
 
 ## 2.6.0 — 2026-07-23 · Auswertung „Was bei dir funktioniert“
 
