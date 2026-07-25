@@ -199,10 +199,14 @@
   $("contactAnrede").addEventListener("change", saveFlat);
   $("employment").addEventListener("change", renderChecklist);
 
+  // UX-04: Fortschritt misst nur die KERN-Felder, nicht alle 13 – funktionsfähig
+  // ist die App schon mit dem Namen; alles andere macht Anschreiben nur persönlicher.
+  // „Profil zu 8 % ausgefüllt" nach dem ersten Feld war die teuerste Abbruchstelle.
+  const CORE_FIELDS = ["name", "job", "employment", "income", "persons"];
   function profileCompleteness() {
     const p = getProfile();
-    const filled = profileFields.filter((f) => (p[f] || "").trim() !== "").length;
-    return Math.round((filled / profileFields.length) * 100);
+    const filled = CORE_FIELDS.filter((f) => (p[f] || "").trim() !== "").length;
+    return Math.round((filled / CORE_FIELDS.length) * 100);
   }
   // Bei Bürgergeld/Grundsicherung gibt es kein Erwerbseinkommen und keinen aktiven Beruf:
   // Beruf- und Einkommensfeld leeren (auch vorher Eingetragenes), sperren und ausgrauen.
@@ -219,7 +223,13 @@
     syncEmploymentLock();
     const pct = profileCompleteness();
     if ($("progressBar")) $("progressBar").style.width = pct + "%";
-    if ($("progressLabel")) $("progressLabel").textContent = tr("profile.progress", { pct });
+    // Mit Namen ist die App startklar – das sagt das Label dann auch, statt mit
+    // einer Prozentzahl zu suggerieren, es fehle noch Pflichtarbeit (UX-04).
+    if ($("progressLabel")) {
+      $("progressLabel").textContent = getProfile().name
+        ? (pct >= 100 ? tr("profile.progressFull") : tr("profile.progressReady"))
+        : tr("profile.progress", { pct });
+    }
     // EINE Regel statt Banner + Schrittleiste + Pill einzeln: Die Onboarding-Karte
     // ist nur sichtbar, solange kein Name im Profil steht. Danach ist der
     // Profil-Tab der einzige (ausreichende) Einstieg.
