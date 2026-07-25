@@ -143,6 +143,22 @@
     refreshParsed(); renderHistory();
     updateProfileUI(); renderChecklist(); flash("profileNote", tr("profile.resetDone"));
   }
+  // Art. 20 DSGVO: alle Speicherschlüssel als JSON ausleiten – nicht nur den Tracker.
+  async function exportAllData() {
+    const keys = Object.values(store.KEYS);
+    const defaults = {}; keys.forEach((k) => (defaults[k] = null));
+    const raw = await store.get(defaults);
+    const data = {}; keys.forEach((k) => { if (raw[k] != null) data[k] = raw[k]; });
+    const out = {
+      exportedAt: new Date().toISOString(),
+      version: (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getManifest) ? chrome.runtime.getManifest().version : "",
+      data,
+    };
+    const blob = new Blob([JSON.stringify(out, null, 2)], { type: "application/json" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = tr("export.file"); a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    toast(tr("export.done"), "ok");
+  }
   function clearAllData() {
     if (!confirm(tr("profile.clearAllConfirm"))) return;
     clearTimeout(profileSaveTimer); profileSaveTimer = null;
@@ -160,6 +176,7 @@
   $("saveProfile").addEventListener("click", saveProfile);
   $("clearProfile").addEventListener("click", clearProfile);
   $("clearAllData").addEventListener("click", clearAllData);
+  $("exportAllData").addEventListener("click", exportAllData);
   ["flatDesc","contactName"].forEach((id) => $(id).addEventListener("input", saveFlat));
   $("contactAnrede").addEventListener("change", saveFlat);
   $("employment").addEventListener("change", renderChecklist);
