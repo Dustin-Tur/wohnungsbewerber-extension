@@ -6,6 +6,9 @@
    drei Stellen erlaubt – Logo-Kachel, aktiver Nav-Tab, Primär-Button. Alles
    andere nutzt neutrale Flächen + dezenten Accent-Tint (--tint). Schatten sind
    neutral und weich (keine farbigen Leucht-Schatten). Radius-Skala: --r-s/m/l. */
+/* WERTE-PAARUNG (UX-08): Das Overlay auf den Portalseiten und der Puls-Stil
+   beziehen dieselben Werte aus WBA.TOKENS in lib/config.js (CSS kann keine
+   JS-Werte lesen). Bei Farb-/Token-Änderungen BEIDE Stellen pflegen. */
 :root {
   --bg: #FBF7F0;
   --bg-glow-1: rgba(23,121,90,0.07);

@@ -94,13 +94,15 @@
   /* ---------- Overlay-Gerüst (Shadow DOM, damit Portal-CSS nicht stört) ----------
      Design 2.1.0 „Ruhig & professionell": neutraler Kopf mit kleiner Gradient-
      Logo-Kachel, EIN Primär-Button, klare Sekundär-/Werkzeug-Hierarchie,
-     dezente Tints statt Leucht-Schatten. Gleiche Tokens wie shared.css. */
+     dezente Tints statt Leucht-Schatten. Werte kommen aus WBA.TOKENS
+     (lib/config.js) – der EINEN JS-Quelle, gepaart mit shared.css (UX-08). */
+  const T = WBA.TOKENS;
   const CSS = `
     :host { all: initial; }
     * { box-sizing: border-box; }
-    .box { --acc: #17795A; --acc2: #0f6047; --tint: rgba(23,121,90,0.09);
-      --text: #1B2420; --muted: #56615A; --bdr: rgba(27,36,32,0.14);
-      --bg: #ffffff; --inp: #F5EEE2; --ok: #16a34a; --warn: #b45309;
+    .box { --acc: ${T.accent}; --acc2: ${T.accentDark}; --tint: rgba(${T.accentRgb},0.09);
+      --text: ${T.text}; --muted: ${T.muted}; --bdr: ${T.border};
+      --bg: ${T.card}; --inp: ${T.inputBg}; --ok: ${T.ok}; --warn: ${T.warn};
       position: fixed; top: 16px; right: 16px; width: 364px; max-height: calc(100vh - 32px);
       display: flex; flex-direction: column; z-index: 2147483647;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -123,48 +125,48 @@
       color: var(--muted); margin: 0 0 8px; }
     .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
     .chip { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px;
-      color: var(--text); background: var(--tint); border: 1px solid rgba(23,121,90,0.28); }
+      color: var(--text); background: var(--tint); border: 1px solid rgba(${T.accentRgb},0.28); }
     textarea { width: 100%; min-height: 190px; resize: vertical;
       border: 1px solid var(--bdr); border-radius: 12px; padding: 10px 11px; font-size: 12.5px;
       line-height: 1.55; font-family: inherit; color: var(--text); background: var(--inp); }
-    textarea:focus { outline: none; border-color: var(--acc); box-shadow: 0 0 0 3px rgba(23,121,90,0.18); }
+    textarea:focus { outline: none; border-color: var(--acc); box-shadow: 0 0 0 3px rgba(${T.accentRgb},0.18); }
     .msg { font-size: 12px; margin: 8px 0 0; padding: 8px 10px; border-radius: 8px; line-height: 1.45; }
-    .msg.ok { background: rgba(22,163,74,0.1); color: #15803d; }
-    .msg.warn { background: rgba(180,83,9,0.1); color: var(--warn); }
+    .msg.ok { background: rgba(${T.okRgb},0.1); color: ${T.okText}; }
+    .msg.warn { background: rgba(${T.warnRgb},0.1); color: var(--warn); }
     .row { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 9px; }
     button.b { all: unset; cursor: pointer; text-align: center; box-sizing: border-box;
       display: inline-flex; align-items: center; justify-content: center; gap: 6px;
       padding: 9px 12px; border-radius: 10px; font-size: 12.5px; font-weight: 600;
       font-family: inherit; border: 1px solid var(--bdr); background: var(--bg);
       color: var(--text); flex: 1 1 auto; transition: background .15s, border-color .15s; }
-    button.b:hover { border-color: rgba(23,121,90,0.5); background: var(--tint); }
+    button.b:hover { border-color: rgba(${T.accentRgb},0.5); background: var(--tint); }
     button.b.primary { background: linear-gradient(135deg, var(--acc), var(--acc2)); color: #fff;
       border: none; flex-basis: 100%; padding: 11px 12px; font-size: 13px; font-weight: 700; }
     button.b.primary:hover { filter: brightness(1.06); background: linear-gradient(135deg, var(--acc), var(--acc2)); }
-    button.b.go { background: rgba(22,163,74,0.1); color: #15803d; border-color: rgba(22,163,74,0.4); }
-    button.b.go:hover { background: rgba(22,163,74,0.16); border-color: rgba(22,163,74,0.55); }
+    button.b.go { background: rgba(${T.okRgb},0.1); color: ${T.okText}; border-color: rgba(${T.okRgb},0.4); }
+    button.b.go:hover { background: rgba(${T.okRgb},0.16); border-color: rgba(${T.okRgb},0.55); }
     button.b.sm { flex: 1 1 auto; padding: 7px 9px; font-size: 11.5px; color: var(--muted); }
     button.b.sm:hover { color: var(--text); }
     .tools { display: flex; gap: 6px; margin-top: 8px; }
     button.link { all: unset; cursor: pointer; display: block; width: 100%; text-align: center;
       margin-top: 9px; font-size: 11.5px; font-weight: 600; font-family: inherit;
       color: var(--warn); padding: 5px; border-radius: 8px; }
-    button.link:hover { background: rgba(180,83,9,0.08); }
+    button.link:hover { background: rgba(${T.warnRgb},0.08); }
     .foot { font-size: 10.5px; color: var(--muted); margin: 10px 0 0; text-align: center; line-height: 1.4; }
     .salut { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 0 0 10px; }
     .salut .lbl { display: inline-flex; align-items: center; gap: 5px;
       font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px; }
-    .salut .lbl.ok { background: rgba(22,163,74,0.1); color: #15803d; }
+    .salut .lbl.ok { background: rgba(${T.okRgb},0.1); color: ${T.okText}; }
     .salut .lbl.warn { background: rgba(180,83,9,0.1); color: var(--warn); }
     .salut select { flex: 1 1 auto; min-width: 130px; font-size: 12px; padding: 5px 7px;
       border-radius: 8px; border: 1px solid var(--bdr); background: var(--inp); color: var(--text); font-family: inherit; }
     @media (prefers-color-scheme: dark) {
-      .box { --text: #F2EDE3; --muted: #A79F92; --bdr: rgba(255,249,240,0.15);
-        --bg: #1C1A16; --inp: rgba(255,249,240,0.05); --tint: rgba(63,190,142,0.14);
-        --acc: #3FBE8E; --acc2: #0f6047;
+      .box { --text: ${T.dark.text}; --muted: ${T.dark.muted}; --bdr: ${T.dark.border};
+        --bg: ${T.dark.card}; --inp: ${T.dark.inputBg}; --tint: rgba(${T.dark.accentRgb},0.14);
+        --acc: ${T.dark.accent}; --acc2: ${T.accentDark};
         box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 18px 50px -22px rgba(0,0,0,0.7); }
-      .msg.ok, button.b.go { color: #34d399; }
-      .salut .lbl.ok { color: #34d399; }
+      .msg.ok, button.b.go { color: ${T.dark.okText}; }
+      .salut .lbl.ok { color: ${T.dark.okText}; }
     }
   `;
 
@@ -240,7 +242,7 @@
   function injectPulseStyle() {
     if (document.getElementById("wba-cp-pulse-style")) return;
     const s = document.createElement("style"); s.id = "wba-cp-pulse-style";
-    s.textContent = ".wba-cp-pulse{outline:3px solid #17795A !important;outline-offset:2px;border-radius:6px;animation:wbaCpPulse 1.3s ease-in-out infinite}@keyframes wbaCpPulse{0%,100%{outline-color:#17795A}50%{outline-color:rgba(203,110,69,.45)}}";
+    s.textContent = `.wba-cp-pulse{outline:3px solid ${T.accent} !important;outline-offset:2px;border-radius:6px;animation:wbaCpPulse 1.3s ease-in-out infinite}@keyframes wbaCpPulse{0%,100%{outline-color:${T.accent}}50%{outline-color:rgba(${T.accent2Rgb},.45)}}`;
     (document.head || document.documentElement).appendChild(s);
   }
   function scrollToSend() {
