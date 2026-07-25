@@ -267,7 +267,10 @@
       // ehrlich sagen statt den Nutzer durch lauter alte Anzeigen zu führen (FUN-05).
       if (!filtered.length) { flashMsg(tr("ov.allApplied"), true); startBtn.disabled = false; return; }
       const queue = filtered;
-      await store.setRun({ active: true, portal: portal.id, tone: state.filters.ton || "standard", queue, index: 0, startedAt: Date.now() });
+      // Ohne gespeicherten Run NICHT losnavigieren – der Durchlauf würde nach
+      // der ersten Anzeige orientierungslos abbrechen (FUN-03).
+      try { await store.setRun({ active: true, portal: portal.id, tone: state.filters.ton || "standard", queue, index: 0, startedAt: Date.now() }); }
+      catch (e) { flashMsg(tr("err.save", { err: (e && e.message) || String(e) }), true); startBtn.disabled = false; return; }
       location.href = queue[0].url;
     };
     const res = panel.querySelector('[data-act="resume"]');
@@ -398,16 +401,20 @@
       const entry = (await store.getTracker()).find((e) => store.trackerKey(e.portal, e.listingId) === key);
       appliedAt = (entry && (entry.appliedAt || entry.ts)) || 0;
     }
+    let trackerSaveError = null;
     if (p.name && (filled || run) && !alreadyApplied) {
-      await store.upsertTracker({
-        portal: portal.id, listingId,
-        title: (document.title || "").slice(0, 120), url: location.href.split("#")[0],
-        ort: info.ort || "", qm: info.groesse || "", preis: info.preis || "", ton: tone,
-        status: "vorbereitet",
-      });
+      try {
+        await store.upsertTracker({
+          portal: portal.id, listingId,
+          title: (document.title || "").slice(0, 120), url: location.href.split("#")[0],
+          ort: info.ort || "", qm: info.groesse || "", preis: info.preis || "", ton: tone,
+          status: "vorbereitet",
+        });
+      } catch (e) { log.warn("Anzeige konnte nicht vorgemerkt werden:", e); trackerSaveError = e; }
     }
 
     renderListingOverlay({ info, run, qIndex, queueLen: queue.length, filled, hadText, hasProfile: !!p.name, alreadyApplied, appliedAt });
+    if (trackerSaveError) flashMsg(tr("err.save", { err: trackerSaveError.message || String(trackerSaveError) }), true);
   }
 
   function chipsHtml(info) {
@@ -522,18 +529,27 @@
     on("copy", async () => { try { await navigator.clipboard.writeText(ta() ? ta().value : generated); flashMsg(tr("ov.copied")); } catch (e) { flashMsg(tr("ov.copyFailed"), true); } });
     on("send", scrollToSend);
     on("markSent", async () => {
-      await store.upsertTracker({
-        portal: portal.id, listingId: dom.listingId(portal, location.href),
-        title: (document.title || "").slice(0, 120), url: location.href.split("#")[0],
-        ort: o.info.ort || "", qm: o.info.groesse || "", preis: o.info.preis || "",
-        ton: (state.run && state.run.tone) || state.filters.ton || "standard", status: "beworben",
-      });
+      try {
+        await store.upsertTracker({
+          portal: portal.id, listingId: dom.listingId(portal, location.href),
+          title: (document.title || "").slice(0, 120), url: location.href.split("#")[0],
+          ort: o.info.ort || "", qm: o.info.groesse || "", preis: o.info.preis || "",
+          ton: (state.run && state.run.tone) || state.filters.ton || "standard", status: "beworben",
+        });
+      } catch (e) { flashMsg(tr("err.save", { err: (e && e.message) || String(e) }), true); return; } // Knopf nicht umschalten
       flashMsg(tr("ov.markedMsg"));
       const b = panel.querySelector('[data-act="markSent"]'); if (b) { b.textContent = tr("ov.marked"); b.style.opacity = ".7"; }
     });
     on("skip", () => advance("übersprungen"));
     on("next", () => advance("beworben"));
-    on("stop", async () => { if (state.run) { state.run.active = false; await store.setRun(state.run); } removeHost(); });
+    on("stop", async () => {
+      if (state.run) {
+        state.run.active = false;
+        try { await store.setRun(state.run); }
+        catch (e) { state.run.active = true; flashMsg(tr("err.save", { err: (e && e.message) || String(e) }), true); return; } // Run läuft real weiter → Overlay offen lassen
+      }
+      removeHost();
+    });
   }
 
   function currentFlat() {
@@ -551,18 +567,30 @@
     const listingId = dom.listingId(portal, location.href);
     // Titel/URL mitgeben, damit auch ein hier NEU entstehender Eintrag (Edge-Case:
     // vorheriger Upsert schlug fehl) nicht leer in der Bewerbungsliste steht.
-    await store.upsertTracker({
-      portal: portal.id, listingId, status,
-      title: (document.title || "").slice(0, 120), url: location.href.split("#")[0],
-    });
+    // Schlägt das Speichern fehl, NICHT weiternavigieren: sonst ginge genau die
+    // „beworben"-Markierung verloren, die Doppelbewerbungen verhindert (FUN-03).
+    const saveFailed = (e) => flashMsg(tr("err.save", { err: (e && e.message) || String(e) }), true);
+    try {
+      await store.upsertTracker({
+        portal: portal.id, listingId, status,
+        title: (document.title || "").slice(0, 120), url: location.href.split("#")[0],
+      });
+    } catch (e) { saveFailed(e); return; }
     const run = state.run;
     if (!run || !run.active) { removeHost(); return; }
     const queue = run.queue || [];
     let i = queue.findIndex((e) => (e.url || "").split("#")[0] === location.href.split("#")[0]);
     if (i < 0) i = run.index || 0;
     const next = queue[i + 1];
-    if (next) { run.index = i + 1; await store.setRun(run); location.href = next.url; }
-    else { run.active = false; await store.setRun(run); alertDone(); }
+    if (next) {
+      run.index = i + 1;
+      try { await store.setRun(run); } catch (e) { saveFailed(e); return; }
+      location.href = next.url;
+    } else {
+      run.active = false;
+      try { await store.setRun(run); } catch (e) { run.active = true; saveFailed(e); return; } // Run gilt real als aktiv
+      alertDone();
+    }
   }
   function alertDone() {
     mountHost();
@@ -616,7 +644,9 @@
       if (state.run && state.run.active && state.run.startedAt && Date.now() - state.run.startedAt > expiry) {
         log.debug("Durchlauf abgelaufen (gestartet " + new Date(state.run.startedAt).toLocaleString() + ") → deaktiviert");
         state.run.active = false;
-        await store.setRun(state.run);
+        // Best-Effort-Aufräumen: in-memory ist der Run schon aus; ein Storage-Fehler
+        // hier darf die Seiten-Erkennung nicht stoppen.
+        try { await store.setRun(state.run); } catch (e) { log.warn("Abgelaufenen Durchlauf nicht deaktivierbar:", e); }
       }
       state.profile = await store.getProfile();
       state.filters = await store.getFilters();
@@ -680,7 +710,7 @@
     const pendingExpiry = CFG.PENDING_EXPIRY_MS || 10 * 60 * 1000;
     if (pending && (!pending.ts || Date.now() - pending.ts > pendingExpiry)) {
       log.debug("Suchauftrag verfallen (ts:", pending.ts, ") → verworfen");
-      await store.setPending(null);
+      try { await store.setPending(null); } catch (e) { log.warn("Verfallener Suchauftrag nicht löschbar:", e); }
       pending = null;
     }
 
@@ -689,7 +719,10 @@
     //  ginge z. B. der Preisfilter aus der URL verloren.)
     if (pending && pending.portals && pending.portals.indexOf(portal.id) >= 0) {
       const rest = pending.portals.filter((id) => id !== portal.id);
-      await store.setPending(rest.length ? { portals: rest, filters: pending.filters } : null);
+      // Verbrauch best-effort persistieren: schlägt es fehl, feuert der Auftrag
+      // schlimmstenfalls innerhalb der 10-min-Frist noch einmal (FUN-04 begrenzt das).
+      try { await store.setPending(rest.length ? { portals: rest, filters: pending.filters, ts: pending.ts } : null); }
+      catch (e) { log.warn("Suchauftrag-Verbrauch nicht speicherbar:", e); }
       if (portal.driveSearch !== false && !dom.isListing(portal, location.href, document)) {
         triedSearch = true;
         try {

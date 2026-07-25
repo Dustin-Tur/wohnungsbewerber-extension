@@ -35,7 +35,7 @@
   $("themeToggle").addEventListener("change", () => {
     themeManual = true;
     const t = $("themeToggle").checked ? "dark" : "light";
-    applyTheme(t); store.setTheme(t); toast(tr($("themeToggle").checked ? "app.themeDark" : "app.themeLight"), "info");
+    applyTheme(t); store.setTheme(t).catch(saveErrToast); toast(tr($("themeToggle").checked ? "app.themeDark" : "app.themeLight"), "info");
   });
   async function initTheme() {
     const saved = await store.getTheme();
@@ -68,7 +68,8 @@
     });
   }
   $("langToggle").addEventListener("click", async () => {
-    await i18n.setLang(i18n.lang === "de" ? "en" : "de");
+    try { await i18n.setLang(i18n.lang === "de" ? "en" : "de"); }
+    catch (e) { saveErrToast(e); return; }
     toast(tr("lang.switched"), "ok");
   });
   // Auch auf Wechsel aus anderen Kontexten reagieren (z. B. Overlay auf einer Portalseite).
@@ -84,6 +85,16 @@
     setTimeout(() => { el.classList.add("out"); setTimeout(() => el.remove(), 320); }, 2400);
   }
   function flash(id, msg) { toast(msg, /^✓/.test(msg) ? "ok" : "info"); }
+  // FUN-03: Speicherfehler sichtbar machen – ein Fehlschlag darf nie wie Erfolg
+  // aussehen. Leicht gedrosselt, damit z. B. der Autosave beim Tippen nicht spammt.
+  let lastSaveErrTs = 0;
+  function saveErrToast(e) {
+    (WBA.log || console).warn("Speichern fehlgeschlagen:", e);
+    const now = Date.now();
+    if (now - lastSaveErrTs < 4000) return;
+    lastSaveErrTs = now;
+    toast(tr("err.save", { err: (e && e.message) || String(e) }), "error");
+  }
 
   /* ================= NAVIGATION ================= */
   function showTab(tab) {
@@ -119,7 +130,7 @@
     if (flat.contactName != null) $("contactName").value = flat.contactName;
     // Falls ein Alt-Profil noch Beruf/Einkommen trotz Bürgergeld enthält: bereinigen + persistieren.
     if ($("employment").value === "buergergeld" && ($("job").value || $("income").value)) {
-      $("job").value = ""; $("income").value = ""; store.setProfile(getProfile());
+      $("job").value = ""; $("income").value = ""; store.setProfile(getProfile()).catch(saveErrToast);
     }
     refreshParsed();
   }
@@ -129,14 +140,20 @@
   let profileSaveTimer = null;
   function autosaveProfile() {
     clearTimeout(profileSaveTimer);
-    profileSaveTimer = setTimeout(() => { profileSaveTimer = null; store.setProfile(getProfile()); }, 600);
+    profileSaveTimer = setTimeout(() => { profileSaveTimer = null; store.setProfile(getProfile()).catch(saveErrToast); }, 600);
   }
-  function saveProfile() { clearTimeout(profileSaveTimer); profileSaveTimer = null; store.setProfile(getProfile()); flash("profileNote", tr("profile.saved")); updateProfileUI(); }
-  function clearProfile() {
+  async function saveProfile() {
+    clearTimeout(profileSaveTimer); profileSaveTimer = null;
+    try { await store.setProfile(getProfile()); flash("profileNote", tr("profile.saved")); }
+    catch (e) { saveErrToast(e); }
+    updateProfileUI();
+  }
+  async function clearProfile() {
     if (!confirm(tr("profile.resetConfirm"))) return;
     clearTimeout(profileSaveTimer); profileSaveTimer = null; // ausstehender Autosave würde das Alte zurückschreiben
     // Löscht alles Persönliche, was die DSE der Funktion zusagt – nicht nur wba_profile.
-    store.remove([store.KEYS.profile, store.KEYS.history, store.KEYS.flat, store.KEYS.docs, store.KEYS.textfp]);
+    try { await store.remove([store.KEYS.profile, store.KEYS.history, store.KEYS.flat, store.KEYS.docs, store.KEYS.textfp]); }
+    catch (e) { saveErrToast(e); return; } // Daten sind NICHT weg → UI nicht leeren
     profileFields.forEach((f) => { if ($(f)) $(f).value = ""; });
     $("flatDesc").value = ""; $("contactAnrede").value = ""; $("contactName").value = "";
     historyList = []; docsState = {};
@@ -167,11 +184,12 @@
     const keep = [store.KEYS.theme, store.KEYS.lang, store.KEYS.migrated];
     const keys = Object.values(store.KEYS).filter((k) => keep.indexOf(k) < 0);
     // Alt-Reste der v1-localStorage-Ära mit entfernen (die Migration kopiert nur, löscht nicht).
-    keys.forEach((k) => { try { localStorage.removeItem(k); } catch (e) {} });
-    store.remove(keys).then(() => location.reload());
+    keys.forEach((k) => { try { localStorage.removeItem(k); } catch (e) { (WBA.log || console).warn("localStorage.removeItem:", e); } });
+    // Reload NUR nach erfolgreichem Löschen – sonst sähe die leere Oberfläche wie Erfolg aus.
+    store.remove(keys).then(() => location.reload(), saveErrToast);
   }
   function saveFlat() {
-    store.setFlat({ desc: $("flatDesc").value.trim(), contactAnrede: $("contactAnrede").value, contactName: $("contactName").value.trim() });
+    store.setFlat({ desc: $("flatDesc").value.trim(), contactAnrede: $("contactAnrede").value, contactName: $("contactName").value.trim() }).catch(saveErrToast);
   }
   $("saveProfile").addEventListener("click", saveProfile);
   $("clearProfile").addEventListener("click", clearProfile);
@@ -436,7 +454,7 @@
   function pushHistory(entry) {
     if (historyList.length && historyList[0].text === entry.text) return;
     entry.ts = Date.now(); historyList.unshift(entry); historyList = historyList.slice(0, 10);
-    store.setHistory(historyList); renderHistory();
+    store.setHistory(historyList).catch(saveErrToast); renderHistory();
   }
   function renderHistory() {
     const box = $("historyList"); if (!box) return;
@@ -457,7 +475,10 @@
       box.appendChild(item);
     });
     const clear = document.createElement("button"); clear.type = "button"; clear.className = "btn history-clear"; clear.textContent = tr("history.clear");
-    clear.addEventListener("click", () => { historyList = []; store.setHistory([]); renderHistory(); toast(tr("history.cleared"), "info"); });
+    clear.addEventListener("click", async () => {
+      try { await store.setHistory([]); } catch (e) { saveErrToast(e); return; } // Verlauf ist NICHT weg
+      historyList = []; renderHistory(); toast(tr("history.cleared"), "info");
+    });
     box.appendChild(clear);
   }
 
@@ -483,12 +504,12 @@
     items.push(item("selbstauskunft"));
     return items;
   }
-  function setDoc(id, checked) { docsState[id] = checked; store.setDocs(docsState); }
+  function setDoc(id, checked) { docsState[id] = checked; store.setDocs(docsState).catch(saveErrToast); }
   // SCHUFA-Schutz-Schalter: nie erwähnen + nicht verlangen (siehe dashboard.html).
   if ($("noSchufa")) $("noSchufa").addEventListener("change", () => {
     docsState.noSchufa = $("noSchufa").checked;
     if (docsState.noSchufa) docsState.schufa = false; // ein evtl. gesetztes „liegt bereit" zurücknehmen
-    store.setDocs(docsState);
+    store.setDocs(docsState).catch(saveErrToast);
     renderChecklist();
     toast(tr(docsState.noSchufa ? "docs.noSchufaOn" : "docs.noSchufaOff"), "info");
   });
@@ -566,7 +587,7 @@
       portals: selectedPortals
     };
   }
-  function saveFilters() { store.setFilters(readFilters()); }
+  function saveFilters() { store.setFilters(readFilters()).catch(saveErrToast); }
   ["fOrt","fZimmer","fQm","fPreis","fTon","autoOverlay"].forEach((id) => { const el = $(id); if (el) el.addEventListener("change", saveFilters); });
   // Ton-Dropdown hält die Moduswahl im Anschreiben-Tab synchron (eine Einstellung).
   if ($("fTon")) $("fTon").addEventListener("change", () => setTone($("fTon").value));
@@ -597,7 +618,9 @@
     btn.disabled = true;
     try {
       // Filter hinterlegen: das Content-Script füllt sie auf der Portalseite in die echte Suchmaske.
-      await store.setPending({ portals: chosen.map((p) => p.id), filters: f, ts: Date.now() });
+      // Schlägt das fehl, KEINE Tabs öffnen – sie würden ohne Auftrag leer laufen.
+      try { await store.setPending({ portals: chosen.map((p) => p.id), filters: f, ts: Date.now() }); }
+      catch (e) { saveErrToast(e); status.className = "form-status error"; status.textContent = tr("err.save", { err: (e && e.message) || String(e) }); return; }
       let opened = 0;
       for (let i = 0; i < chosen.length; i++) {
         const url = chosen[i].buildSearchUrl(f);
@@ -655,7 +678,8 @@
     const text = letter.followUp(e, profile);
     try { await navigator.clipboard.writeText(text); }
     catch (err) { const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); }
-    await store.upsertTracker({ portal: e.portal, listingId: e.listingId, followupAt: Date.now() });
+    try { await store.upsertTracker({ portal: e.portal, listingId: e.listingId, followupAt: Date.now() }); }
+    catch (err) { saveErrToast(err); return; } // nicht als „nachgefasst" anzeigen, was nicht gespeichert ist
     toast(tr("tracker.followUpCopied"), "ok");
     if (e.url) { if (typeof chrome !== "undefined" && chrome.tabs) chrome.tabs.create({ url: e.url }); else window.open(e.url, "_blank"); }
     renderTracker();
@@ -777,7 +801,8 @@
         const dt = document.createElement("input"); dt.type = "datetime-local"; dt.value = e.besichtigung || "";
         dt.setAttribute("aria-label", tr("tracker.appointmentAria"));
         dt.addEventListener("change", async () => {
-          await store.upsertTracker({ portal: e.portal, listingId: e.listingId, besichtigung: dt.value });
+          try { await store.upsertTracker({ portal: e.portal, listingId: e.listingId, besichtigung: dt.value }); }
+          catch (err) { saveErrToast(err); }
           renderTracker();
         });
         extra.appendChild(lbl); extra.appendChild(dt);
@@ -813,7 +838,11 @@
 
       const sel = document.createElement("select"); sel.style.width = "auto";
       STATUSES.forEach((s) => { const o = document.createElement("option"); o.value = s; o.textContent = statusLabel(s); if (e.status === s) o.selected = true; sel.appendChild(o); });
-      sel.addEventListener("change", async () => { await store.upsertTracker({ portal: e.portal, listingId: e.listingId, status: sel.value }); renderTracker(); });
+      sel.addEventListener("change", async () => {
+        try { await store.upsertTracker({ portal: e.portal, listingId: e.listingId, status: sel.value }); }
+        catch (err) { saveErrToast(err); } // renderTracker() unten zeigt danach wieder den echten Stand
+        renderTracker();
+      });
 
       const badge = document.createElement("span"); badge.className = "status-badge status-" + (e.status || "vorbereitet"); badge.textContent = statusLabel(e.status || "vorbereitet");
 
@@ -823,8 +852,8 @@
       del.title = tr("tracker.delete"); del.setAttribute("aria-label", tr("tracker.delete"));
       del.style.cssText = "width:auto;padding:4px 10px;flex:0 0 auto";
       del.addEventListener("click", async () => {
-        await store.removeTracker(e.portal, e.listingId);
-        toast(tr("tracker.deleted"), "info");
+        try { await store.removeTracker(e.portal, e.listingId); toast(tr("tracker.deleted"), "info"); }
+        catch (err) { saveErrToast(err); }
         renderTracker();
       });
 
@@ -889,13 +918,15 @@
   if ($("aiMode")) $("aiMode").addEventListener("change", aiSyncFields);
   if ($("aiSave")) $("aiSave").addEventListener("click", async () => {
     const s = readSettings();
+    const st = $("aiStatus");
     if (!aiConsentGiven(s)) {
-      const st = $("aiStatus"); st.className = "form-status error"; st.textContent = tr("ai.consentRequired");
+      st.className = "form-status error"; st.textContent = tr("ai.consentRequired");
       return;
     }
-    await store.setSettings(s);
+    try { await store.setSettings(s); }
+    catch (e) { st.className = "form-status error"; st.textContent = tr("err.save", { err: (e && e.message) || String(e) }); return; }
     if ($("aiPill")) $("aiPill").hidden = !WBA.ai.isConfigured(s);
-    const st = $("aiStatus"); st.className = "form-status ok"; st.textContent = tr("ai.saved");
+    st.className = "form-status ok"; st.textContent = tr("ai.saved");
     toast(tr("ai.savedToast"), "ok");
   });
   // Technische Fehler in eine Handlungsanweisung übersetzen – niemand kann mit
@@ -917,7 +948,8 @@
     const s = readSettings();
     const st = $("aiStatus");
     if (!aiConsentGiven(s)) { st.className = "form-status error"; st.textContent = tr("ai.consentRequired"); return; }
-    await store.setSettings(s);
+    try { await store.setSettings(s); }
+    catch (e) { st.className = "form-status error"; st.textContent = tr("err.save", { err: (e && e.message) || String(e) }); return; }
     const btn = $("aiTest");
     if (!WBA.ai.isConfigured(s)) { st.className = "form-status info"; st.textContent = tr("ai.errNotConfigured"); return; }
     st.className = "form-status info"; st.textContent = tr("ai.testing");
@@ -938,7 +970,8 @@
   if (STORE_URL && $("rateBtn")) { $("rateBtn").href = STORE_URL.replace(/\/$/, "") + "/reviews"; $("rateBtn").hidden = false; }
 
   (async function init() {
-    await store.migrate();
+    // Migration ist Best-Effort: ein Fehlschlag darf den Dashboard-Start nicht verhindern.
+    try { await store.migrate(); } catch (e) { (WBA.log || console).warn("Migration fehlgeschlagen:", e); }
     // Sprache VOR allem anderen: jeder Renderer unten holt seine Texte daraus.
     await i18n.init();
     i18n.apply(document);

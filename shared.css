@@ -428,6 +428,7 @@ details.more[open] > summary::before { content: "▾ "; }
 .toast.out { animation: toastOut .28s ease forwards; }
 .toast.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
 .toast.info { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+.toast.error { color: var(--err); border-color: color-mix(in srgb, var(--err) 40%, transparent); }
 @keyframes toastIn { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes toastOut { to { opacity: 0; transform: translateY(10px) scale(.96); } }
 @media (prefers-reduced-motion: reduce) { .toast, .toast.out { animation: none; } }
