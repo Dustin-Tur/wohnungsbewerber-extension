@@ -25,21 +25,21 @@
   },
   "permissions": ["scripting", "storage", "tabs"],
   "host_permissions": [
-    "https://*.wg-gesucht.de/*",
-    "https://*.kleinanzeigen.de/*",
-    "https://*.immobilienscout24.de/*",
-    "https://*.immowelt.de/*",
-    "https://*.immonet.de/*",
+    "https://www.wg-gesucht.de/*",
+    "https://www.kleinanzeigen.de/*",
+    "https://www.immobilienscout24.de/*",
+    "https://www.immowelt.de/*",
+    "https://www.immonet.de/*",
     "https://api.anthropic.com/*"
   ],
   "content_scripts": [
     {
       "matches": [
-        "https://*.wg-gesucht.de/*",
-        "https://*.kleinanzeigen.de/*",
-        "https://*.immobilienscout24.de/*",
-        "https://*.immowelt.de/*",
-        "https://*.immonet.de/*"
+        "https://www.wg-gesucht.de/*",
+        "https://www.kleinanzeigen.de/*",
+        "https://www.immobilienscout24.de/*",
+        "https://www.immowelt.de/*",
+        "https://www.immonet.de/*"
       ],
       "js": ["lib/config.js", "lib/i18n.js", "lib/icons.js", "lib/parse.js", "lib/salutation.js", "lib/letter.js", "lib/portals.js", "lib/store.js", "lib/ai.js", "content.js"],
       "run_at": "document_idle"
