@@ -1,11 +1,11 @@
 {
   "extName": {
-    "message": "WohnungsBewerber",
-    "description": "Name der Erweiterung im Chrome Web Store und in der Toolbar."
+    "message": "WohnungsBewerber – Anschreiben & Bewerbung",
+    "description": "Name der Erweiterung im Chrome Web Store und in der Toolbar. Marken-Zusatz „Anschreiben & Bewerbung“ für die Store-Suche (ASO)."
   },
   "extDescription": {
-    "message": "Findet Wohnungen und bereitet deine Bewerbung vor. Du prüfst und sendest selbst. Lokal, kostenlos, keine Datenweitergabe.",
-    "description": "Kurzbeschreibung (max. 132 Zeichen) unter dem Namen im Store."
+    "message": "Anschreiben & Bewerbung für WG-Gesucht, ImmoScout, Kleinanzeigen & Immowelt. Lokal & kostenlos – du prüfst und sendest selbst.",
+    "description": "Kurzbeschreibung (max. 132 Zeichen) unter dem Namen im Store. Enthält bewusst die Portalnamen als Suchbegriffe."
   },
   "actionTitle": {
     "message": "WohnungsBewerber öffnen",

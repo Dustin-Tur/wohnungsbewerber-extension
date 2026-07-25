@@ -1,7 +1,7 @@
 {
   "extName": {
-    "message": "WohnungsBewerber",
-    "description": "Extension name in the Chrome Web Store and toolbar. Kept as the German brand name on purpose."
+    "message": "WohnungsBewerber – German Rental Letters",
+    "description": "Extension name in the Chrome Web Store and toolbar. German brand kept first, English keyword suffix for expat search (ASO)."
   },
   "extDescription": {
     "message": "Renting in Germany? Get your rental application letter written in German — you only fill in an English form. Local & free.",
