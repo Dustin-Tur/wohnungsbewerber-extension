@@ -384,16 +384,27 @@
 
     // Nur vormerken, wenn ein echtes Kontaktformular gefunden wurde ODER ein Durchlauf läuft
     // (kein Zumüllen des Trackers durch bloßes Durchblättern).
-    if (p.name && (filled || run)) {
+    // Bereits beworbene Anzeigen NIE anfassen: der Upsert würde „beworben"/
+    // „antwort"/„besichtigung" auf „vorbereitet" zurückstufen – Statistik,
+    // Nachfass-Erinnerung und Queue-Filter wären danach falsch (Doppelbewerbung).
+    const listingId = dom.listingId(portal, location.href);
+    const alreadyApplied = p.name ? await store.hasApplied(portal.id, listingId) : false;
+    let appliedAt = 0;
+    if (alreadyApplied) {
+      const key = store.trackerKey(portal.id, listingId);
+      const entry = (await store.getTracker()).find((e) => store.trackerKey(e.portal, e.listingId) === key);
+      appliedAt = (entry && (entry.appliedAt || entry.ts)) || 0;
+    }
+    if (p.name && (filled || run) && !alreadyApplied) {
       await store.upsertTracker({
-        portal: portal.id, listingId: dom.listingId(portal, location.href),
+        portal: portal.id, listingId,
         title: (document.title || "").slice(0, 120), url: location.href.split("#")[0],
         ort: info.ort || "", qm: info.groesse || "", preis: info.preis || "", ton: tone,
         status: "vorbereitet",
       });
     }
 
-    renderListingOverlay({ info, run, qIndex, queueLen: queue.length, filled, hadText, hasProfile: !!p.name });
+    renderListingOverlay({ info, run, qIndex, queueLen: queue.length, filled, hadText, hasProfile: !!p.name, alreadyApplied, appliedAt });
   }
 
   function chipsHtml(info) {
@@ -443,12 +454,20 @@
     else if (o.filled) statusKey = "ov.filled";
     else if (o.hadText) statusKey = "ov.hadText";
     const statusMsg = '<div class="msg ' + (o.filled ? "ok" : "warn") + '">' + esc(tr(statusKey)) + "</div>";
+    // FUN-01: Wiederbesuch einer bereits beworbenen Anzeige deutlich machen,
+    // statt still ein frisches Anschreiben anzubieten.
+    const appliedMsg = o.alreadyApplied
+      ? '<div class="msg warn">' + esc(o.appliedAt
+          ? tr("ov.alreadyAppliedOn", { d: new Date(o.appliedAt).toLocaleDateString(i18n.locale()) })
+          : tr("ov.alreadyApplied")) + "</div>"
+      : "";
 
     panel.innerHTML = `
       <div class="box">
         ${headHtml({ ver: true, min: true })}
         <div class="bd">
           <p class="prog">${esc(prog)}</p>
+          ${appliedMsg}
           <div class="chips">${chipsHtml(o.info)}</div>
           ${o.hasProfile ? '<div class="salut"><span class="lbl ' + (sb.ok ? "ok" : "warn") + '" title="' + esc(tr("ov.salutTitle")) + '">' + ic("mail", 12) + " " + esc(sb.text) + '</span><select data-el="salutSel" title="' + esc(tr("ov.salutCorrect")) + '">' + salutOptionsHtml() + "</select></div>" : ""}
           ${o.hasProfile ? '<textarea data-el="ta">' + esc(generated) + "</textarea>" : ""}
