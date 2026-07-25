@@ -71,7 +71,9 @@
       check();
     });
   }
-  function esc(s) { return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  // Escapt auch Quotes (SEC-06): heute stehen alle dynamischen Werte in Textknoten,
+  // aber ein künftiges `attr="${esc(x)}"` wäre sonst ein Attribut-Breakout.
+  function esc(s) { return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
   // Statische Inline-SVG-Icons (lib/icons.js) – kein Nutzer-Input, innerHTML-sicher.
   const ic = (name, size) => (WBA.icons ? WBA.icons.svg(name, size || 13) : "");
   // Einheitliche Kopfzeile des Overlays (Logo-Kachel, Name, Version, Fenster-Knöpfe).

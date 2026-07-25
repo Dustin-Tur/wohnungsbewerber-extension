@@ -536,7 +536,9 @@
       row.appendChild(cb); row.appendChild(span); box.appendChild(row);
     });
   }
-  function esc(s) { return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  // Escapt auch Quotes (SEC-06): heute stehen alle dynamischen Werte in Textknoten,
+  // aber ein künftiges `attr="${esc(x)}"` wäre sonst ein Attribut-Breakout.
+  function esc(s) { return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
   // ACHTUNG: Die Selbstauskunft ist ein DEUTSCHES Dokument für deutsche Vermieter
   // und bleibt in JEDER Oberflächensprache deutsch – wie das Anschreiben selbst.
   // Deshalb hier bewusst feste Texte statt i18n (siehe Invariante in lib/i18n.js).
