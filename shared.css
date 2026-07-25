@@ -255,6 +255,16 @@ textarea { resize: vertical; min-height: 80px; }
 .status-besichtigung { background: color-mix(in srgb, var(--accent-2) 18%, transparent); color: color-mix(in srgb, var(--accent-2) 72%, var(--text)); }
 .status-übersprungen { background: color-mix(in srgb, var(--muted) 18%, transparent); color: var(--muted); }
 
+/* Schmales Fenster / Split-Screen (UX-03): Titel + Meta bekommen die volle
+   Breite, Bedienelemente rutschen in eine eigene Zeile – statt einer Kolonne
+   einzelner Wörter, wenn Badge/Select/Löschen die Breite zuerst beanspruchen. */
+@media (max-width: 720px) {
+  .tracker-item { flex-wrap: wrap; align-items: flex-start; }
+  .tracker-item .ti-main { flex: 1 1 100%; }
+  .tracker-item .ti-meta { overflow-wrap: anywhere; }
+  .tracker-item select { flex: 1 1 auto; }
+}
+
 /* Zweitzeile im Tracker-Eintrag: Besichtigungs-Termin bzw. Nachfass-Hinweis */
 .tracker-item .ti-extra { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 7px; font-size: .78rem; }
 .tracker-item .ti-extra input[type="datetime-local"] { width: auto; padding: 4px 8px; font-size: .78rem; }
