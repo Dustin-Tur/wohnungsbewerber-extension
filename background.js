@@ -62,13 +62,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 // Oberflächensprache EINMAL festschreiben, damit sie nie „springt":
 //  - Neuinstallation: keine Festlegung → lib/i18n.js nimmt die Browsersprache
 //    (englischer Browser ⇒ englische Oberfläche, genau die Expat-Zielgruppe).
-//  - Update einer bestehenden Installation: hart auf Deutsch. Wer die Erweiterung
-//    schon nutzt, hat sie auf Deutsch installiert und soll nach einem Update nicht
-//    plötzlich vor englischen Knöpfen sitzen, nur weil Chrome englisch eingestellt ist.
+//  - Update einer bestehenden Installation: die BISHER GEZEIGTE Sprache festschreiben
+//    (i18n.detect() = dieselbe Ableitung aus der Browsersprache, die bis dahin galt).
+//    Hart auf Deutsch zu pinnen wäre falsch, seit es die englische Oberfläche gibt:
+//    ein Expat mit englischem Browser säße nach dem Update vor deutschen Knöpfen (FUN-11).
 async function pinLanguageOnUpdate() {
   try {
     if (await WBA.store.getLang()) return; // Nutzer hat bereits selbst gewählt
-    await WBA.store.setLang("de");
+    await WBA.store.setLang(WBA.i18n.detect());
   } catch (e) { if (WBA.log) WBA.log.debug("Sprache konnte nicht festgeschrieben werden:", e); }
 }
 
