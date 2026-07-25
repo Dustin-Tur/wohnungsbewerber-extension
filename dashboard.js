@@ -436,7 +436,10 @@
       const isDemoProfile = !real.name;
       const p = isDemoProfile ? DEMO_PROFILE : real;
       const flat = { desc: DEMO_FLAT_TEXT, salutation: { category: "frau", name: "Weber" } };
-      const text = await letter.generate(p, flat, currentMode, parsedInfo, { docs: isDemoProfile ? {} : docsState });
+      // buildLetter statt generate(): die Demo soll wirklich NICHTS persistieren –
+      // generate() würde einen Text-Fingerprint schreiben und damit einen der 20
+      // Anti-Wiederholungs-Slots der echten Anschreiben verbrauchen (FUN-10).
+      const text = letter.buildLetter(p, flat, currentMode, parsedInfo, { docs: isDemoProfile ? {} : docsState });
       const out = $("output");
       out.classList.remove("out-empty"); out.textContent = text;
       out.classList.remove("reveal"); void out.offsetWidth; out.classList.add("reveal");
