@@ -19,8 +19,7 @@
   function done() { try { window.close(); } catch (e) {} }
   try {
     var base = chrome.runtime.getURL("dashboard.html");
-    chrome.tabs.query({}, function (tabs) {
-      if (chrome.runtime.lastError) { chrome.tabs.create({ url: base }); done(); return; }
+    var dedup = function (tabs) {
       var ex = (tabs || []).find(function (t) { return t.url && t.url.indexOf(base) === 0; });
       if (ex) {
         // Tab kann zwischen query und update geschlossen worden sein → dann neu öffnen.
@@ -34,6 +33,18 @@
         chrome.tabs.create({ url: base });
         done();
       }
+    };
+    // Nur nach dem eigenen Dashboard-Tab fragen (EXT-02) statt alle Tabs zu lesen;
+    // Rückfall auf query({}), falls das chrome-extension://-Pattern abgelehnt wird.
+    chrome.tabs.query({ url: base + "*" }, function (tabs) {
+      if (chrome.runtime.lastError) {
+        chrome.tabs.query({}, function (all) {
+          if (chrome.runtime.lastError) { chrome.tabs.create({ url: base }); done(); return; }
+          dedup(all);
+        });
+        return;
+      }
+      dedup(tabs);
     });
   } catch (e) {
     try { chrome.tabs.create({ url: chrome.runtime.getURL("dashboard.html") }); } catch (e2) {}

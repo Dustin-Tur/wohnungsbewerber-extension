@@ -388,7 +388,9 @@
     const status = $("flatStatus");
     if (typeof chrome === "undefined" || !chrome.tabs || !chrome.scripting) { status.className = "form-status info"; status.textContent = tr("tab.notInstalled"); return; }
     try {
-      const tabs = await chrome.tabs.query({});
+      // Nur Portal-Tabs abfragen (EXT-02): mit tabs-Berechtigung enthielte ein
+      // query({}) URL und Titel ALLER offenen Tabs – Daten, die hier niemand braucht.
+      const tabs = await chrome.tabs.query({ url: portals.URL_PATTERNS });
       const selfUrl = location.href;
       // NUR Portal-Tabs: für andere Seiten fehlt die Host-Berechtigung, executeScript
       // würde dort immer scheitern (früherer Fallback auf den jüngsten Tab war ein

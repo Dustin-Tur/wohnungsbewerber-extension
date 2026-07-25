@@ -16,8 +16,10 @@ importScripts("lib/config.js", "lib/i18n.js", "lib/parse.js", "lib/salutation.js
 function openOrFocusDashboard(hash) {
   const base = chrome.runtime.getURL("dashboard.html");
   const openNew = () => { try { chrome.tabs.create({ url: base + (hash ? "#" + hash : "") }); } catch (e) {} };
-  chrome.tabs.query({}, (tabs) => {
-    if (chrome.runtime.lastError) { openNew(); return; }
+  // Nur nach dem eigenen Dashboard-Tab fragen (EXT-02) statt alle Tabs zu lesen.
+  // Rückfall auf query({}), falls Chrome das chrome-extension://-Pattern ablehnt –
+  // dann bleibt wenigstens die Deduplizierung intakt.
+  const dedup = (tabs) => {
     const existing = (tabs || []).find((t) => t.url && t.url.indexOf(base) === 0);
     if (!existing) { openNew(); return; }
     const target = hash ? base + "#" + hash : undefined;
@@ -29,7 +31,18 @@ function openOrFocusDashboard(hash) {
         chrome.windows.update(existing.windowId, { focused: true }, () => { void chrome.runtime.lastError; });
       }
     });
-  });
+  };
+  try {
+    chrome.tabs.query({ url: base + "*" }, (tabs) => {
+      if (chrome.runtime.lastError) {
+        chrome.tabs.query({}, (all) => { if (chrome.runtime.lastError) { openNew(); return; } dedup(all); });
+        return;
+      }
+      dedup(tabs);
+    });
+  } catch (e) {
+    chrome.tabs.query({}, (all) => { if (chrome.runtime.lastError) { openNew(); return; } dedup(all); });
+  }
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
