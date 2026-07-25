@@ -243,7 +243,7 @@
         <div class="bd">
           <p class="prog">${esc(tr("ov.found", { n: results.length }))}</p>
           <p style="font-size:12.5px;margin:0 0 4px">${esc(tr("ov.foundText"))}</p>
-          ${resumable ? '<div class="msg ok">' + esc(tr("ov.resumable")) + '</div>' : ''}
+          ${resumable ? '<div class="msg ok">' + esc(tr("ov.resumable")) + '</div>' : '<div class="msg" hidden></div>'}
           <div class="row">
             <button class="b primary" data-act="start">${ic("play")} ${esc(tr("ov.start", { n: results.length }))}</button>
             ${resumable ? '<button class="b" data-act="resume">' + ic("refresh") + " " + esc(tr("ov.resume")) + '</button>' : ''}
@@ -263,7 +263,10 @@
         .filter((e) => store.APPLIED_STATUS.includes(e.status))
         .map((e) => store.trackerKey(e.portal, e.listingId)));
       const filtered = results.filter((r) => !applied.has(store.trackerKey(portal.id, r.id)));
-      const queue = filtered.length ? filtered : results;
+      // Kein Rückfall auf die ungefilterte Liste: sind alle Treffer beworben,
+      // ehrlich sagen statt den Nutzer durch lauter alte Anzeigen zu führen (FUN-05).
+      if (!filtered.length) { flashMsg(tr("ov.allApplied"), true); startBtn.disabled = false; return; }
+      const queue = filtered;
       await store.setRun({ active: true, portal: portal.id, tone: state.filters.ton || "standard", queue, index: 0, startedAt: Date.now() });
       location.href = queue[0].url;
     };
@@ -540,7 +543,7 @@
   }
   function flashMsg(msg, warn) {
     const box = panel && panel.querySelector(".msg");
-    if (box) { box.className = "msg " + (warn ? "warn" : "ok"); box.textContent = msg; }
+    if (box) { box.hidden = false; box.className = "msg " + (warn ? "warn" : "ok"); box.textContent = msg; }
   }
 
   // Aktuelle Anzeige im Tracker markieren und zur nächsten der Queue springen.
