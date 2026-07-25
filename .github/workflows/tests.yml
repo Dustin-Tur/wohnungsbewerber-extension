@@ -37,3 +37,21 @@ jobs:
             exit 1
           fi
           echo "Alle Suiten bestanden."
+
+  # QUA-09: Statische Analyse – reines Entwicklungswerkzeug, läuft NUR hier
+  # (lokal ist kein Node installiert, es gibt bewusst kein package.json, und
+  # der Auslieferpfad bleibt unberührt – die Build-Whitelist kennt ESLint nicht).
+  # continue-on-error: informativ, blockiert nicht; schärfen, sobald der
+  # Bestand lint-sauber ist.
+  lint:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: ESLint (via npx, ohne package.json)
+        run: npx --yes eslint@9 .
