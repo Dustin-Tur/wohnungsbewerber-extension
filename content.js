@@ -635,6 +635,12 @@
     if (next) {
       run.index = i + 1;
       try { await store.setRun(run); } catch (e) { saveFailed(e); return; }
+      // EXT-11: kurze, leicht zufällige Pause mit sichtbarer Ankündigung –
+      // schnelle, gleichförmige Serienaufrufe sind exakt das Muster, das die
+      // Bot-Erkennung der Portale auslöst (Folge: Captcha/Rate-Limit beim Nutzer).
+      flashMsg(tr("ov.nextLoading"));
+      const pMin = CFG.RUN_PAUSE_MIN_MS || 800, pMax = CFG.RUN_PAUSE_MAX_MS || 2000;
+      await new Promise((r) => setTimeout(r, pMin + Math.floor(Math.random() * (pMax - pMin))));
       location.href = next.url;
     } else {
       run.active = false;
