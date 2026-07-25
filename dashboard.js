@@ -135,15 +135,31 @@
   function clearProfile() {
     if (!confirm(tr("profile.resetConfirm"))) return;
     clearTimeout(profileSaveTimer); profileSaveTimer = null; // ausstehender Autosave würde das Alte zurückschreiben
-    store.remove(store.KEYS.profile);
+    // Löscht alles Persönliche, was die DSE der Funktion zusagt – nicht nur wba_profile.
+    store.remove([store.KEYS.profile, store.KEYS.history, store.KEYS.flat, store.KEYS.docs, store.KEYS.textfp]);
     profileFields.forEach((f) => { if ($(f)) $(f).value = ""; });
+    $("flatDesc").value = ""; $("contactAnrede").value = ""; $("contactName").value = "";
+    historyList = []; docsState = {};
+    refreshParsed(); renderHistory();
     updateProfileUI(); renderChecklist(); flash("profileNote", tr("profile.resetDone"));
+  }
+  function clearAllData() {
+    if (!confirm(tr("profile.clearAllConfirm"))) return;
+    clearTimeout(profileSaveTimer); profileSaveTimer = null;
+    // Theme/Sprache sind reine UI-Einstellungen ohne Personenbezug und bleiben;
+    // das Migrations-Flag bleibt, damit migrate() keine Alt-Daten zurückholt.
+    const keep = [store.KEYS.theme, store.KEYS.lang, store.KEYS.migrated];
+    const keys = Object.values(store.KEYS).filter((k) => keep.indexOf(k) < 0);
+    // Alt-Reste der v1-localStorage-Ära mit entfernen (die Migration kopiert nur, löscht nicht).
+    keys.forEach((k) => { try { localStorage.removeItem(k); } catch (e) {} });
+    store.remove(keys).then(() => location.reload());
   }
   function saveFlat() {
     store.setFlat({ desc: $("flatDesc").value.trim(), contactAnrede: $("contactAnrede").value, contactName: $("contactName").value.trim() });
   }
   $("saveProfile").addEventListener("click", saveProfile);
   $("clearProfile").addEventListener("click", clearProfile);
+  $("clearAllData").addEventListener("click", clearAllData);
   ["flatDesc","contactName"].forEach((id) => $(id).addEventListener("input", saveFlat));
   $("contactAnrede").addEventListener("change", saveFlat);
   $("employment").addEventListener("change", renderChecklist);
