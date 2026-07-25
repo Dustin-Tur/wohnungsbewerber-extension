@@ -876,6 +876,10 @@
       }
 
       const sel = document.createElement("select"); sel.style.width = "auto";
+      // Status-Farbe direkt am Bedienelement (UX-09): EINE Fläche, die zugleich
+      // anzeigt und bedient – das doppelte Badge daneben entfällt und gibt der
+      // Textspalte die Breite zurück, die ihr unter 720 px fehlte (UX-03).
+      sel.className = "status-" + (e.status || "vorbereitet");
       STATUSES.forEach((s) => { const o = document.createElement("option"); o.value = s; o.textContent = statusLabel(s); if (e.status === s) o.selected = true; sel.appendChild(o); });
       sel.addEventListener("change", async () => {
         try { await store.upsertTracker({ portal: e.portal, listingId: e.listingId, status: sel.value }); }
@@ -883,7 +887,6 @@
         renderTracker();
       });
 
-      const badge = document.createElement("span"); badge.className = "status-badge status-" + (e.status || "vorbereitet"); badge.textContent = statusLabel(e.status || "vorbereitet");
 
       // Eintrag löschen (z. B. Fehlklick, erledigte/abgesagte Wohnung, Datenhygiene).
       const del = document.createElement("button");
@@ -896,7 +899,7 @@
         renderTracker();
       });
 
-      item.appendChild(main); item.appendChild(badge); item.appendChild(sel); item.appendChild(del);
+      item.appendChild(main); item.appendChild(sel); item.appendChild(del);
       box.appendChild(item);
     });
   }
