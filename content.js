@@ -267,6 +267,11 @@
       // ehrlich sagen statt den Nutzer durch lauter alte Anzeigen zu führen (FUN-05).
       if (!filtered.length) { flashMsg(tr("ov.allApplied"), true); startBtn.disabled = false; return; }
       const queue = filtered;
+      // Kostenbremse (SEC-03): Bei aktivierter KI löst jede Anzeige der Queue einen
+      // kostenpflichtigen Call über den Nutzer-Schlüssel aus – ab der Schwelle nachfragen.
+      if (state.aiReady && queue.length >= (CFG.AI_RUN_CONFIRM_FROM || 5) && !confirm(tr("ov.aiRunConfirm", { n: queue.length }))) {
+        startBtn.disabled = false; return;
+      }
       // Ohne gespeicherten Run NICHT losnavigieren – der Durchlauf würde nach
       // der ersten Anzeige orientierungslos abbrechen (FUN-03).
       try { await store.setRun({ active: true, portal: portal.id, tone: state.filters.ton || "standard", queue, index: 0, startedAt: Date.now() }); }
