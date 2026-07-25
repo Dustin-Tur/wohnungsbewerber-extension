@@ -889,7 +889,6 @@
         renderTracker();
       });
 
-
       // Eintrag löschen (z. B. Fehlklick, erledigte/abgesagte Wohnung, Datenhygiene).
       const del = document.createElement("button");
       del.type = "button"; del.className = "btn"; del.textContent = "✕";
