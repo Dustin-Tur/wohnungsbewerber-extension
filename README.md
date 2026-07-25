@@ -4,7 +4,7 @@
 Sie erkennt Wohnungsanzeigen auf den großen Portalen und bereitet in Sekunden eine individuelle Bewerbung vor – prüfen und absenden machst du selbst.
 
 🔗 **Live & Infos:** [wohnungsbewerber.app](https://wohnungsbewerber.app)
-🧩 **Veröffentlicht im Chrome Web Store** · Version 2.4.5 · Manifest V3
+🧩 **Veröffentlicht im Chrome Web Store** · aktuelle Version: siehe [manifest.json](manifest.json) bzw. Store-Eintrag · Manifest V3
 
 ---
 
