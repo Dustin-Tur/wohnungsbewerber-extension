@@ -216,16 +216,16 @@
       <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
 
       <div class="grid">
-        <div class="field"><label for="name" data-i18n="profile.name">Voller Name</label><input id="name" autocomplete="off" data-i18n-attr="placeholder:profile.namePh" placeholder="Max Mustermann"></div>
-        <div class="field"><label for="email" data-i18n="profile.email">E-Mail (Kontakt)</label><input id="email" type="email" autocomplete="off" data-i18n-attr="placeholder:profile.emailPh" placeholder="name@mail.de"></div>
-        <div class="field"><label for="phone" data-i18n="profile.phone">Telefon (Kontakt)</label><input id="phone" type="tel" autocomplete="off" placeholder="0176 1234567"></div>
+        <div class="field"><label for="name" data-i18n="profile.name">Voller Name</label><input id="name" autocomplete="name" data-i18n-attr="placeholder:profile.namePh" placeholder="Max Mustermann"></div>
+        <div class="field"><label for="email" data-i18n="profile.email">E-Mail (Kontakt)</label><input id="email" type="email" autocomplete="email" data-i18n-attr="placeholder:profile.emailPh" placeholder="name@mail.de"></div>
+        <div class="field"><label for="phone" data-i18n="profile.phone">Telefon (Kontakt)</label><input id="phone" type="tel" autocomplete="tel" placeholder="0176 1234567"></div>
       </div>
 
       <p class="hint" style="margin:16px 0 8px" data-i18n="profile.addressHint">Adresse – damit Kontaktformulare komplett automatisch ausgefüllt werden.</p>
       <div class="grid-3">
-        <div class="field"><label for="street" data-i18n-html="profile.street">Straße &amp; Nr.</label><input id="street" autocomplete="off" placeholder="Musterstraße 1"></div>
-        <div class="field"><label for="plz" data-i18n="profile.zip">PLZ</label><input id="plz" autocomplete="off" placeholder="50667"></div>
-        <div class="field"><label for="city" data-i18n="profile.city">Wohnort</label><input id="city" autocomplete="off" placeholder="Köln"></div>
+        <div class="field"><label for="street" data-i18n-html="profile.street">Straße &amp; Nr.</label><input id="street" autocomplete="street-address" placeholder="Musterstraße 1"></div>
+        <div class="field"><label for="plz" data-i18n="profile.zip">PLZ</label><input id="plz" autocomplete="postal-code" inputmode="numeric" placeholder="50667"></div>
+        <div class="field"><label for="city" data-i18n="profile.city">Wohnort</label><input id="city" autocomplete="address-level2" placeholder="Köln"></div>
       </div>
 
       <details class="more" open>
@@ -245,7 +245,7 @@
               <option value="buergergeld" data-i18n="emp.buergergeld">Arbeitslos / Bürgergeld / Grundsicherung</option>
             </select>
           </div>
-          <div class="field"><label for="income" data-i18n="profile.income">Einkommen (netto/Monat)</label><input id="income" autocomplete="off" data-i18n-attr="placeholder:profile.incomePh" placeholder="z. B. 3200 €"></div>
+          <div class="field"><label for="income" data-i18n="profile.income">Einkommen (netto/Monat)</label><input id="income" inputmode="decimal" autocomplete="off" data-i18n-attr="placeholder:profile.incomePh" placeholder="z. B. 3200 €"></div>
           <div class="field"><label for="persons" data-i18n="profile.persons">Anzahl Personen</label><input id="persons" type="number" min="1" autocomplete="off" placeholder="2"></div>
           <div class="field"><label for="pets" data-i18n="profile.pets">Haustiere</label><input id="pets" autocomplete="off" data-i18n-attr="placeholder:profile.petsPh" placeholder="z. B. keine / 1 Katze"></div>
         </div>
