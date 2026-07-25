@@ -851,16 +851,21 @@
   });
 
   /* ================= KI-EINSTELLUNGEN ================= */
+  // Zeitstempel der dokumentierten Einwilligung (Art. 4 Nr. 11 DSGVO); null = nie erteilt.
+  let aiConsentTs = null;
   function aiSyncFields() {
     const mode = $("aiMode").value;
     $("aiKeyWrap").hidden = mode !== "anthropic";
     $("aiModelWrap").hidden = mode !== "anthropic";
+    $("aiConsentWrap").hidden = mode !== "anthropic";
   }
   async function loadSettings() {
     const s = await store.getSettings();
     if ($("aiMode")) $("aiMode").value = s.mode || "off";
     if ($("aiKey")) $("aiKey").value = s.apiKey || "";
     if ($("aiModel")) $("aiModel").value = s.model || "claude-haiku-4-5";
+    aiConsentTs = s.consentTs || null;
+    if ($("aiConsent")) $("aiConsent").checked = !!aiConsentTs;
     aiSyncFields();
     if ($("aiPill")) $("aiPill").hidden = !WBA.ai.isConfigured(s);
   }
@@ -869,11 +874,25 @@
       mode: $("aiMode").value,
       apiKey: $("aiKey").value.trim(),
       model: $("aiModel").value,
+      consentTs: aiConsentTs,
     };
+  }
+  // Ohne bestätigten Datenhinweis wird der Anthropic-Modus nicht gespeichert –
+  // erst die Checkbox macht aus dem Umstellen eine informierte Einwilligung.
+  function aiConsentGiven(s) {
+    if (s.mode !== "anthropic") return true;
+    if (!$("aiConsent").checked) { aiConsentTs = null; return false; }
+    if (!aiConsentTs) aiConsentTs = Date.now();
+    s.consentTs = aiConsentTs;
+    return true;
   }
   if ($("aiMode")) $("aiMode").addEventListener("change", aiSyncFields);
   if ($("aiSave")) $("aiSave").addEventListener("click", async () => {
     const s = readSettings();
+    if (!aiConsentGiven(s)) {
+      const st = $("aiStatus"); st.className = "form-status error"; st.textContent = tr("ai.consentRequired");
+      return;
+    }
     await store.setSettings(s);
     if ($("aiPill")) $("aiPill").hidden = !WBA.ai.isConfigured(s);
     const st = $("aiStatus"); st.className = "form-status ok"; st.textContent = tr("ai.saved");
@@ -896,8 +915,9 @@
   }
   if ($("aiTest")) $("aiTest").addEventListener("click", async () => {
     const s = readSettings();
-    await store.setSettings(s);
     const st = $("aiStatus");
+    if (!aiConsentGiven(s)) { st.className = "form-status error"; st.textContent = tr("ai.consentRequired"); return; }
+    await store.setSettings(s);
     const btn = $("aiTest");
     if (!WBA.ai.isConfigured(s)) { st.className = "form-status info"; st.textContent = tr("ai.errNotConfigured"); return; }
     st.className = "form-status info"; st.textContent = tr("ai.testing");
