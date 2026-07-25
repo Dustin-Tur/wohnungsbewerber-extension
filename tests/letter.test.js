@@ -183,6 +183,26 @@
   ok("ohne noSchufa: kein Verbots-Satz", !/unter KEINEN Umständen/.test(prompt2), prompt2);
 
   /* =========================================================
+     5d) FUN-07: Verbkongruenz der Unterlagen-Zeile
+     ========================================================= */
+  // Math.random auf 0 gepinnt trifft in jedem Baustein-Pool Variante 0 –
+  // darunter die beiden Subjekt-Varianten („… liegen bereit …"), um die es
+  // in FUN-07 geht. Der Text ist damit deterministisch.
+  var origRandom = Math.random;
+  function withZeroRandom(fn) {
+    Math.random = function () { return 0; };
+    try { return fn(); } finally { Math.random = origRandom; }
+  }
+  var kSing = withZeroRandom(function () { return L.buildLetter(P, FLAT, "formal", INFO, { docs: { selbstauskunft: true } }); });
+  ok("FUN-07 formal: EINE Singular-Unterlage → „liegt bereit“", kSing.indexOf("Selbstauskunft liegt bereit") >= 0, kSing);
+  var kGen = withZeroRandom(function () { return L.buildLetter(P, FLAT, "standard", INFO, { docs: { selbstauskunft: true } }); });
+  ok("FUN-07 standard: EINE Singular-Unterlage → „liegt … bereit“", kGen.indexOf("liegt meine ausgefüllte Selbstauskunft schon bereit") >= 0, kGen);
+  var kPl = withZeroRandom(function () { return L.buildLetter(P, FLAT, "formal", INFO, { docs: { gehalt: true } }); });
+  ok("FUN-07: EINE Plural-Unterlage (Gehaltsnachweise) bleibt „liegen“", kPl.indexOf("Gehaltsnachweise liegen bereit") >= 0, kPl);
+  var kZwei = withZeroRandom(function () { return L.buildLetter(P, FLAT, "formal", INFO, { docs: { schufa: true, selbstauskunft: true } }); });
+  ok("FUN-07: ZWEI Unterlagen → „liegen bereit“", kZwei.indexOf("Selbstauskunft liegen bereit") >= 0, kZwei);
+
+  /* =========================================================
      6) Blacklist-Funktion selbst
      ========================================================= */
   ok("Blacklist erkennt Floskel", !!L.containsBlacklisted("Hiermit bewerbe ich mich um Ihre Wohnung."));
