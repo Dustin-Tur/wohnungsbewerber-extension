@@ -203,6 +203,18 @@
     }
   }
 
+  // „Aus Tab laden" (Dashboard): liefert den Anzeigen-Text der eigenen Seite.
+  // Ersetzt chrome.scripting.executeScript – die scripting-Berechtigung existierte
+  // nur für diesen einen Komfortpfad (EXT-03).
+  try {
+    chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+      if (!sender || sender.id !== chrome.runtime.id) return;
+      if (!msg || msg.type !== "wbaExtract") return;
+      try { sendResponse({ text: parse.pageExtractor(portal.contentSel || "") }); }
+      catch (e) { sendResponse({ text: "" }); }
+    });
+  } catch (e) { log.debug("wbaExtract-Listener nicht registrierbar:", e); }
+
   /* ---------- Schreiben ins ECHTE Nachrichtenfeld ---------- */
   // Merkt sich, was WIR zuletzt ins Portal-Formular geschrieben haben. Nur eigener
   // Text darf still ersetzt werden (Anrede-Korrektur, „Neu") – fremder Text (selbst

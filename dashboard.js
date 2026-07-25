@@ -386,7 +386,7 @@
   // Text aus einem offenen Anzeigen-Tab lesen (Dashboard ist selbst ein Tab).
   $("loadFromTab").addEventListener("click", async () => {
     const status = $("flatStatus");
-    if (typeof chrome === "undefined" || !chrome.tabs || !chrome.scripting) { status.className = "form-status info"; status.textContent = tr("tab.notInstalled"); return; }
+    if (typeof chrome === "undefined" || !chrome.tabs) { status.className = "form-status info"; status.textContent = tr("tab.notInstalled"); return; }
     try {
       // Nur Portal-Tabs abfragen (EXT-02): mit tabs-Berechtigung enthielte ein
       // query({}) URL und Titel ALLER offenen Tabs – Daten, die hier niemand braucht.
@@ -399,15 +399,20 @@
       const cand = tabs.filter((t) => t.url && /^https?:/i.test(t.url) && t.url !== selfUrl && portals.forUrl(t.url));
       const portalTab = cand.sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0))[0];
       if (!portalTab) { status.className = "form-status info"; status.textContent = tr("tab.noTab"); return; }
-      // Nur anzeigen-eigene Bereiche extrahieren (contentSel des Portal-Adapters),
-      // sonst Titel/Meta – nie „Ähnliche Anzeigen"/Werbung.
-      const tabPortal = portals.forUrl(portalTab.url);
-      const results = await chrome.scripting.executeScript({
-        target: { tabId: portalTab.id },
-        func: parse.pageExtractor,
-        args: [(tabPortal && tabPortal.contentSel) || ""],
+      // Text vom BEREITS INJIZIERTEN Content-Script holen (EXT-03): dieses nutzt
+      // den contentSel seines Portal-Adapters – nur anzeigen-eigene Bereiche,
+      // nie „Ähnliche Anzeigen"/Werbung. Die scripting-Berechtigung ist damit weg.
+      const resp = await new Promise((resolve) => {
+        try {
+          chrome.tabs.sendMessage(portalTab.id, { type: "wbaExtract" }, (r) => {
+            if (chrome.runtime.lastError) { resolve(null); return; }
+            resolve(r || null);
+          });
+        } catch (e) { resolve(null); }
       });
-      const text = (results && results[0] && results[0].result) || "";
+      // Kein Content-Script im Tab (vor Installation/Update geöffnet) → neu laden lassen.
+      if (!resp) { status.className = "form-status info"; status.textContent = tr("tab.reload"); return; }
+      const text = resp.text || "";
       const info = parse.extractFlatInfo(text);
       const hits = Object.keys(info).filter((k) => k !== "preisLabel").length;
       const contact = parse.extractContact(text);

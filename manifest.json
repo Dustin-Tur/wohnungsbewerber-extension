@@ -23,7 +23,7 @@
   "background": {
     "service_worker": "background.js"
   },
-  "permissions": ["scripting", "storage", "tabs"],
+  "permissions": ["storage", "tabs"],
   "host_permissions": [
     "https://www.wg-gesucht.de/*",
     "https://www.kleinanzeigen.de/*",
