@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>SEC-01-Fixtures: Kontaktformulare der Portale + Angriffs-Szenarien</title>
+<!-- Je Portal ein Abschnitt, Struktur aus den live verifizierten Selektoren der
+     Adapter in lib/portals.js abgeleitet (msgSel/sendSel/Feldnamen laut
+     Adapter-Kommentaren). Wird von der SEC-01-Verifikation abschnittsweise in
+     ein sichtbares iframe geladen (data-portal = Adapter-ID).
+     Zusätzlich zwei Angriffs-Szenarien aus audit/03 (SEC-01). -->
+</head>
+<body>
+
+<template id="fixture-kleinanzeigen" data-portal="kleinanzeigen">
+  <article id="viewad-contact">
+    <form id="viewad-contact-form">
+      <label for="viewad-contact-message">Nachricht</label>
+      <textarea id="viewad-contact-message" name="message" rows="4"></textarea>
+      <label for="ka-name">Name</label>
+      <input id="ka-name" name="name" type="text">
+      <label for="ka-phone">Telefonnummer (optional)</label>
+      <input id="ka-phone" name="phoneNumber" type="tel">
+      <button id="viewad-contact-button" type="submit">Nachricht senden</button>
+    </form>
+  </article>
+</template>
+
+<template id="fixture-immowelt" data-portal="immowelt">
+  <section data-testid="cdp-contact-form">
+    <!-- Kein <form>-Element: Aviv-CDP rendert das Kontaktmodul als section (React).
+         Genau der Fall, in dem der alte Code auf das GANZE Dokument zurückfiel. -->
+    <div class="contact-wrapper">
+      <textarea name="message" rows="5" placeholder="Ihre Nachricht"></textarea>
+      <label>Vorname<input name="firstName" type="text"></label>
+      <label>Nachname<input name="lastName" type="text"></label>
+      <label>E-Mail<input name="email" type="email"></label>
+      <label>Telefonnummer<input name="phone" type="tel"></label>
+      <button data-testid="cdp-contact-form-submit.email" type="button">Nachricht senden</button>
+    </div>
+  </section>
+</template>
+
+<template id="fixture-immoscout" data-portal="immoscout">
+  <form data-qa="contactForm">
+    <label for="message">Ihre Nachricht</label>
+    <textarea id="message" name="message" rows="5"></textarea>
+    <label for="is-vorname">Vorname</label>
+    <input id="is-vorname" name="contactForm.firstName" type="text">
+    <label for="is-nachname">Nachname</label>
+    <input id="is-nachname" name="contactForm.lastName" type="text">
+    <label for="is-email">E-Mail-Adresse</label>
+    <input id="is-email" name="contactForm.emailAddress" type="email">
+    <label for="is-phone">Telefonnummer</label>
+    <input id="is-phone" name="contactForm.phoneNumber" type="tel">
+    <button type="submit">Abschicken</button>
+  </form>
+</template>
+
+<template id="fixture-wg-gesucht" data-portal="wg-gesucht">
+  <!-- WG-Gesucht füllt Absenderdaten aus dem Konto: Composer hat NUR das
+       Nachrichtenfeld. Erwartung: nichts wird gefüllt, nichts bricht. -->
+  <form id="messenger_form">
+    <h1 class="sr-only">Nachricht senden an Ina M.</h1>
+    <textarea id="message_input" name="content" rows="6"></textarea>
+    <button type="submit">Senden</button>
+  </form>
+</template>
+
+<template id="fixture-angriff-verstecktes-feld" data-portal="kleinanzeigen">
+  <!-- Angriffs-Szenario A (audit/03 SEC-01): kein <form>; sichtbares Nachrichtenfeld
+       + Senden-Knopf, dazu per CSS versteckte Felder mit passenden Platzhaltern
+       ANDERSWO im Dokument. Alt: doc-Scope füllte die versteckten Felder.
+       Erwartung NEU: keines dieser Felder wird befüllt. -->
+  <div class="fake-listing">
+    <div class="msg-wrap">
+      <textarea aria-label="Nachricht" rows="4"></textarea>
+      <button type="button">Senden</button>
+    </div>
+  </div>
+  <div class="harvest" style="position:absolute;left:-9999px">
+    <input class="h-mail" placeholder="E-Mail" type="text">
+    <input class="h-tel" placeholder="Telefon" type="text">
+    <input class="h-street" placeholder="Straße" type="text">
+    <input class="h-plz" placeholder="PLZ" type="text">
+  </div>
+</template>
+
+<template id="fixture-angriff-sichtbar-ausserhalb" data-portal="kleinanzeigen">
+  <!-- Angriffs-Szenario B: kein <form>; SICHTBARE Erntefelder, aber außerhalb
+       der unmittelbaren Formularumgebung des Nachrichtenfelds.
+       Erwartung NEU: Scope endet am Wrapper des Nachrichtenfelds → leer. -->
+  <div class="page">
+    <div class="msg-wrap">
+      <textarea aria-label="Nachricht" rows="4"></textarea>
+      <button type="button">Senden</button>
+    </div>
+  </div>
+  <aside class="sidebar">
+    <input class="h-mail" placeholder="E-Mail" type="text">
+    <input class="h-tel" placeholder="Telefon" type="text">
+  </aside>
+</template>
+
+</body>
+</html>
