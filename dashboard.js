@@ -350,8 +350,16 @@
   $("copyBtn").addEventListener("click", async () => {
     const out = $("output"); if (out.classList.contains("out-empty")) return;
     const text = out.textContent;
+    let copied = true;
     try { await navigator.clipboard.writeText(text); }
-    catch (e) { const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); }
+    catch (e) { const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); copied = document.execCommand("copy"); document.body.removeChild(ta); }
+    if (!copied) {
+      // Ehrlich bleiben (FUN-09): Text zum manuellen Kopieren markieren statt Erfolg zu melden.
+      const sel = window.getSelection(); sel.removeAllRanges();
+      const range = document.createRange(); range.selectNodeContents(out); sel.addRange(range);
+      toast(tr("letter.copyFailed"), "error");
+      return;
+    }
     const btn = $("copyBtn"); btn.classList.add("copied"); btn.textContent = tr("letter.copied");
     setTimeout(() => { btn.classList.remove("copied"); btn.textContent = tr("letter.copy"); }, 1500);
     toast(tr("letter.copiedToast"), "ok");
@@ -676,8 +684,13 @@
   async function followUpFor(e) {
     const profile = await store.getProfile();
     const text = letter.followUp(e, profile);
+    let copied = true;
     try { await navigator.clipboard.writeText(text); }
-    catch (err) { const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); }
+    catch (err) { const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); copied = document.execCommand("copy"); document.body.removeChild(ta); }
+    // Erst wenn der Text WIRKLICH in der Zwischenablage ist, als nachgefasst markieren –
+    // sonst stünde der Nutzer auf der Portalseite mit leerer Zwischenablage da und der
+    // Eintrag wäre trotzdem abgehakt (FUN-09).
+    if (!copied) { toast(tr("tracker.followUpCopyFailed"), "error"); return; }
     try { await store.upsertTracker({ portal: e.portal, listingId: e.listingId, followupAt: Date.now() }); }
     catch (err) { saveErrToast(err); return; } // nicht als „nachgefasst" anzeigen, was nicht gespeichert ist
     toast(tr("tracker.followUpCopied"), "ok");
