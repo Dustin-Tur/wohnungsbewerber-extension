@@ -71,9 +71,7 @@
       check();
     });
   }
-  // Escapt auch Quotes (SEC-06): heute stehen alle dynamischen Werte in Textknoten,
-  // aber ein künftiges `attr="${esc(x)}"` wäre sonst ein Attribut-Breakout.
-  function esc(s) { return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
+  const esc = WBA.esc; // QUA-08: gemeinsame Fassung (SEC-06-Härtung) in lib/config.js
   // SEC-07: Namen Dritter (Vermieter/Ansprechpartner) gehören nicht im Klartext in
   // die Konsole – sie tauchen sonst in Bildschirmfreigaben und Support-Screenshots
   // auf. Debug-Ausgaben zeigen deshalb nur Initialen bzw. die Kategorie.

@@ -388,9 +388,7 @@
   $("copyBtn").addEventListener("click", async () => {
     const out = $("output"); if (out.classList.contains("out-empty")) return;
     const text = out.textContent;
-    let copied = true;
-    try { await navigator.clipboard.writeText(text); }
-    catch (e) { const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); copied = document.execCommand("copy"); document.body.removeChild(ta); }
+    const copied = await tryCopy(text);
     if (!copied) {
       // Ehrlich bleiben (FUN-09): Text zum manuellen Kopieren markieren statt Erfolg zu melden.
       const sel = window.getSelection(); sel.removeAllRanges();
@@ -579,9 +577,19 @@
       row.appendChild(cb); row.appendChild(span); box.appendChild(row);
     });
   }
-  // Escapt auch Quotes (SEC-06): heute stehen alle dynamischen Werte in Textknoten,
-  // aber ein künftiges `attr="${esc(x)}"` wäre sonst ein Attribut-Breakout.
-  function esc(s) { return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
+  const esc = WBA.esc; // QUA-08: gemeinsame Fassung (SEC-06-Härtung) in lib/config.js
+  // QUA-08: EIN Kopier-Helfer für beide Kopierstellen (Anschreiben, Nachfassen).
+  // true nur bei ECHTEM Erfolg – der execCommand-Rückgabewert zählt (FUN-09).
+  async function tryCopy(text) {
+    try { await navigator.clipboard.writeText(text); return true; }
+    catch (e) {
+      const ta = document.createElement("textarea"); ta.value = text;
+      document.body.appendChild(ta); ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    }
+  }
   // ACHTUNG: Die Selbstauskunft ist ein DEUTSCHES Dokument für deutsche Vermieter
   // und bleibt in JEDER Oberflächensprache deutsch – wie das Anschreiben selbst.
   // Deshalb hier bewusst feste Texte statt i18n (siehe Invariante in lib/i18n.js).
@@ -754,9 +762,7 @@
   async function followUpFor(e) {
     const profile = await store.getProfile();
     const text = letter.followUp(e, profile);
-    let copied = true;
-    try { await navigator.clipboard.writeText(text); }
-    catch (err) { const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); copied = document.execCommand("copy"); document.body.removeChild(ta); }
+    const copied = await tryCopy(text);
     // Erst wenn der Text WIRKLICH in der Zwischenablage ist, als nachgefasst markieren –
     // sonst stünde der Nutzer auf der Portalseite mit leerer Zwischenablage da und der
     // Eintrag wäre trotzdem abgehakt (FUN-09).
