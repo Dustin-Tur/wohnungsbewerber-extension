@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>store.js – Nebenläufigkeits-Tests (FUN-02 / QUA-03)</title>
+<!-- Reproduziert den kontextübergreifenden Eintragsverlust (FUN-02):
+     Zwei iframes laden je eine EIGENE Kopie von lib/store.js (wie zwei
+     Portal-Tabs) auf einem GEMEINSAMEN, absichtlich asynchronen
+     chrome.storage-Stub (zufällige 1–5-ms-Callback-Verzögerung öffnet die
+     Interleaving-Fenster, die chrome.storage.local real hat).
+
+     VOR dem FUN-02-Fix muss diese Seite ROT sein (verlorene Einträge),
+     DANACH grün. Ausführen: Repo-Root per HTTP serven (z. B.
+     python3 -m http.server) und diese Seite öffnen; Ergebnis steht im DOM
+     und in window.__results (maschinenlesbar für den Playwright-Runner). -->
+<style>
+  body { font-family: -apple-system, sans-serif; margin: 24px; }
+  .ok { color: #15803d; } .fail { color: #dc2626; } pre { font-size: 13px; }
+</style>
+</head>
+<body>
+<h1>store.js – Nebenläufigkeit über Kontexte</h1>
+<pre id="out">läuft …</pre>
+<script>
+  // Gemeinsamer async Storage-Stub (simuliert chrome.storage.local über Kontexte)
+  const mem = {};
+  const delay = (cb, ...args) => setTimeout(() => cb(...args), 1 + Math.floor(Math.random() * 5));
+  const backend = {
+    get: (defs, cb) => { const out = {}; Object.keys(defs).forEach(k => out[k] = (k in mem) ? JSON.parse(JSON.stringify(mem[k])) : defs[k]); delay(cb, out); },
+    set: (obj, cb) => { const copy = JSON.parse(JSON.stringify(obj)); delay(() => { Object.assign(mem, copy); cb(); }); },
+    remove: (keys, cb) => { delay(() => { (Array.isArray(keys) ? keys : [keys]).forEach(k => delete mem[k]); cb(); }); },
+  };
+  function reset() { for (const k of Object.keys(mem)) delete mem[k]; }
+
+  // Zwei „Tabs": iframes mit eigener store.js-Instanz auf dem Eltern-Backend.
+  function makeContext(name) {
+    return new Promise((resolve, reject) => {
+      const fr = document.createElement("iframe");
+      fr.style.display = "none";
+      document.body.appendChild(fr);
+      const doc = fr.contentDocument;
+      fr.contentWindow.chrome = { runtime: {}, storage: { local: backend } };
+      let loaded = 0;
+      ["/lib/config.js", "/lib/store.js"].forEach((src) => {
+        const s = doc.createElement("script");
+        s.src = src;
+        s.onload = () => { if (++loaded === 2) resolve(fr.contentWindow.WBA.store); };
+        s.onerror = () => reject(new Error(name + ": " + src + " nicht ladbar"));
+        doc.head.appendChild(s);
+      });
+    });
+  }
+
+  (async () => {
+    const out = document.getElementById("out");
+    const results = [];
+    const ok = (desc, cond, detail) => results.push({ desc, ok: !!cond, detail: detail || "" });
+    const A = await makeContext("A");
+    const B = await makeContext("B");
+
+    // Test 1: Parallele Upserts VERSCHIEDENER Anzeigen aus zwei Kontexten –
+    // ohne kontextübergreifenden Lock verliert Last-Write-Wins Einträge.
+    const ROUNDS = 15;
+    let verloren = 0;
+    for (let i = 0; i < ROUNDS; i++) {
+      reset();
+      await Promise.all([
+        A.upsertTracker({ portal: "is24", listingId: "a" + i, status: "vorbereitet", title: "A" }),
+        B.upsertTracker({ portal: "is24", listingId: "b" + i, status: "beworben", title: "B" }),
+      ]);
+      const list = await A.getTracker();
+      if (list.length !== 2) verloren++;
+    }
+    ok("T1 parallele Upserts zweier Kontexte verlieren keine Einträge (" + ROUNDS + " Runden)",
+      verloren === 0, "verlorene Runden: " + verloren + "/" + ROUNDS);
+
+    // Test 2: Statuswechsel in Kontext A überlebt gleichzeitigen Meta-Upsert in B.
+    let statusVerloren = 0;
+    for (let i = 0; i < ROUNDS; i++) {
+      reset();
+      await A.upsertTracker({ portal: "is24", listingId: "x", status: "vorbereitet", title: "X" });
+      await Promise.all([
+        A.upsertTracker({ portal: "is24", listingId: "x", status: "beworben" }),
+        B.upsertTracker({ portal: "is24", listingId: "y", status: "vorbereitet", title: "Y" }),
+      ]);
+      const list = await B.getTracker();
+      const x = list.find((e) => e.listingId === "x");
+      if (!x || x.status !== "beworben" || list.length !== 2) statusVerloren++;
+    }
+    ok("T2 Statuswechsel überlebt parallelen Fremd-Upsert (" + ROUNDS + " Runden)",
+      statusVerloren === 0, "fehlgeschlagene Runden: " + statusVerloren + "/" + ROUNDS);
+
+    // Test 3: removeTracker in A + Upsert eines ANDEREN Eintrags in B.
+    let removeKaputt = 0;
+    for (let i = 0; i < ROUNDS; i++) {
+      reset();
+      await A.upsertTracker({ portal: "is24", listingId: "del", status: "übersprungen" });
+      await Promise.all([
+        A.removeTracker("is24", "del"),
+        B.upsertTracker({ portal: "is24", listingId: "keep", status: "beworben", title: "K" }),
+      ]);
+      const list = await A.getTracker();
+      const gone = !list.some((e) => e.listingId === "del");
+      const kept = list.some((e) => e.listingId === "keep");
+      if (!gone || !kept) removeKaputt++;
+    }
+    ok("T3 Löschen und Fremd-Upsert kollidieren nicht (" + ROUNDS + " Runden)",
+      removeKaputt === 0, "fehlgeschlagene Runden: " + removeKaputt + "/" + ROUNDS);
+
+    const fails = results.filter((r) => !r.ok);
+    out.innerHTML = results.map((r) =>
+      '<span class="' + (r.ok ? "ok" : "fail") + '">' + (r.ok ? "✓" : "✗") + " " + r.desc + (r.ok ? "" : " — " + r.detail) + "</span>"
+    ).join("\n") + "\n\n" + (fails.length ? "FEHLGESCHLAGEN: " + fails.length + " von " + results.length : "OK: alle " + results.length + " Tests bestanden");
+    window.__results = results;
+    window.__done = true;
+  })().catch((e) => { document.getElementById("out").textContent = "HARNESS-FEHLER: " + e; window.__done = true; window.__results = [{ desc: "harness", ok: false, detail: String(e) }]; });
+</script>
+</body>
+</html>
