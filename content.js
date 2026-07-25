@@ -670,8 +670,19 @@
   async function init() {
     await i18n.init(); // Oberflächensprache vor dem ersten Overlay-Aufbau
     state.filters = await store.getFilters();
-    const pending = await store.getPending();
+    let pending = await store.getPending();
     let triedSearch = false;
+
+    // Verfallene Suchaufträge verwerfen (FUN-04): ohne Frist würde ein Wochen
+    // alter Auftrag beim nächsten beiläufigen Portal-Besuch ungefragt die
+    // Suchmaske füllen und abschicken. Aufträge ohne Zeitstempel (Altbestand)
+    // gelten als abgelaufen.
+    const pendingExpiry = CFG.PENDING_EXPIRY_MS || 10 * 60 * 1000;
+    if (pending && (!pending.ts || Date.now() - pending.ts > pendingExpiry)) {
+      log.debug("Suchauftrag verfallen (ts:", pending.ts, ") → verworfen");
+      await store.setPending(null);
+      pending = null;
+    }
 
     // Angeforderte Suche? Filter in die echte Portal-Suchmaske eintragen und absenden.
     // (Nur für Portale, deren buildSearchUrl NICHT schon zuverlässig filtert – sonst

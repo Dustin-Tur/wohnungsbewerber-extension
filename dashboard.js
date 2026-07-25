@@ -597,7 +597,7 @@
     btn.disabled = true;
     try {
       // Filter hinterlegen: das Content-Script füllt sie auf der Portalseite in die echte Suchmaske.
-      await store.setPending({ portals: chosen.map((p) => p.id), filters: f });
+      await store.setPending({ portals: chosen.map((p) => p.id), filters: f, ts: Date.now() });
       let opened = 0;
       for (let i = 0; i < chosen.length; i++) {
         const url = chosen[i].buildSearchUrl(f);
