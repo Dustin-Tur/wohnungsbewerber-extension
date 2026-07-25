@@ -655,6 +655,31 @@
 
   // Freundlicher Hinweis, wenn die Suche nicht automatisch ausgefüllt werden konnte
   // (Portal-Umbau o. ä.) – damit niemand ratlos vor einer leeren Seite steht.
+  // EXT-10 (Variante B): Die Suchmaske ist gefüllt – abgesendet wird erst nach
+  // diesem ausdrücklichen Klick. Schließen ohne Klick = es passiert nichts.
+  function showSearchConfirm(submitFn, filters) {
+    mountHost();
+    const parts = [];
+    if (filters) {
+      if (filters.ort) parts.push(filters.ort);
+      if (filters.qmMin) parts.push(tr("ov.filterFrom", { n: filters.qmMin }));
+      if (filters.preisMax) parts.push(tr("ov.filterUpTo", { n: filters.preisMax }));
+    }
+    panel.dataset.view = "searchConfirm";
+    lastRender = () => showSearchConfirm(submitFn, filters);
+    panel.innerHTML = '<div class="box">' + headHtml() +
+      '<div class="bd"><div class="msg ok" style="margin-top:0">' + esc(tr("ov.searchFilled")) +
+      (parts.length ? tr("ov.searchHintFilters", { filters: esc(parts.join(" · ")) }) : "") + "</div>" +
+      '<div class="row"><button class="b primary" data-act="go">' + ic("search") + " " + esc(tr("ov.searchGo")) + "</button></div>" +
+      '<p class="foot">' + esc(tr("ov.searchConfirmFoot")) + "</p></div></div>";
+    panel.querySelector('[data-act="close"]').onclick = removeHost;
+    panel.querySelector('[data-act="go"]').onclick = () => {
+      const ok = submitFn();
+      if (!ok) flashMsg(tr("ov.searchGoFailed"), true);
+      else removeHost();
+    };
+  }
+
   function showSearchHint(filters) {
     mountHost();
     const parts = [];
@@ -781,8 +806,11 @@
         try {
           // auf ein gerendertes Eingabefeld warten statt pauschal zu schlafen
           await waitFor(() => document.querySelector("input"), CFG.SEARCH_FORM_TIMEOUT_MS || 4000);
-          const submitted = await dom.driveSearchForm(portal, document, pending.filters || state.filters);
-          if (submitted) { watchUrlChanges(); return; } // Seite navigiert → Erkennung greift danach
+          // EXT-10 (Variante B): driveSearchForm FÜLLT nur noch und liefert den
+          // Absende-Weg als Funktion – abgeschickt wird erst, wenn der Nutzer
+          // im Overlay ausdrücklich bestätigt.
+          const submitFn = await dom.driveSearchForm(portal, document, pending.filters || state.filters);
+          if (submitFn) { showSearchConfirm(submitFn, pending.filters || state.filters); watchUrlChanges(); return; }
         } catch (e) { log.debug("Suchmaske nicht befüllbar, normaler Ablauf:", e); }
       }
     }

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>EXT-10-Fixture – Portal-Suchmaske (Variante B)</title>
+</head>
+<body>
+<!-- EXT-10-Verifikation: Simulierte Portal-Suchseite mit anstehendem
+     Suchauftrag (wba_pending). Erwartung NEU (Variante B): Das Ortsfeld wird
+     GEFÜLLT, aber NICHT abgeschickt; das Overlay fragt „Suche jetzt starten?" –
+     erst der Klick dort löst den Submit aus (#submitted wird sichtbar). -->
+<form id="suchform">
+  <input id="ort" name="ort" type="text" placeholder="Ort oder PLZ">
+  <button id="go" type="submit">Suchen</button>
+</form>
+<div id="submitted" hidden>SUBMITTED</div>
+
+<script src="/lib/config.js"></script>
+<script src="/lib/i18n.js"></script>
+<script src="/lib/icons.js"></script>
+<script src="/lib/parse.js"></script>
+<script src="/lib/salutation.js"></script>
+<script src="/lib/letter.js"></script>
+<script src="/lib/portals.js"></script>
+<script src="/lib/store.js"></script>
+<script src="/lib/ai.js"></script>
+<script>
+  document.getElementById("suchform").addEventListener("submit", function (e) {
+    e.preventDefault();
+    document.getElementById("submitted").hidden = false;
+  });
+  WBA.portals.PORTALS.push({
+    id: "demo-suche", name: "Demo-Suchportal", host: /localhost|127\.0\.0\.1/i,
+    searchHome: location.href, buildSearchUrl() { return location.href; },
+    listingUrlRe: /niemals-listing/i, resultsUrlRe: /niemals-results/i,
+    scrapeSel: "a", contentSel: "body",
+    msgSel: "#gibt-es-nicht", sendSel: "#gibt-es-auch-nicht",
+    searchLocSel: "#ort", searchSubmitSel: "#go",
+  });
+  WBA.store.getProfile = async () => ({ name: "Alina" });
+  WBA.store.getDocs = async () => ({});
+  WBA.store.getLang = async () => null;
+  WBA.store.getRun = async () => null;
+  WBA.store.getFilters = async () => ({});
+  WBA.store.getPending = async () => ({ portals: ["demo-suche"], filters: { ort: "Köln", preisMax: "900" }, ts: Date.now() });
+  WBA.store.setPending = async () => {};
+</script>
+<script src="/content.js"></script>
+</body>
+</html>
