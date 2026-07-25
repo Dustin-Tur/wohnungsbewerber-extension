@@ -100,7 +100,11 @@
   function showTab(tab) {
     document.querySelectorAll(".nav-btn").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
     document.querySelectorAll(".panel").forEach((p) => p.classList.toggle("active", p.id === "tab-" + tab));
-    if (history.replaceState) history.replaceState(null, "", "#" + tab);
+    // pushState statt replaceState (UX-07): jeder Reiterwechsel wird ein
+    // Verlaufseintrag – „Zurück" wechselt zum vorherigen Reiter, statt das
+    // Dashboard zu verlassen. Der Hash-Vergleich verhindert Doppel-Einträge,
+    // wenn der hashchange-Listener showTab nach Zurück/Vorwärts erneut aufruft.
+    if (history.pushState && location.hash !== "#" + tab) history.pushState(null, "", "#" + tab);
     if (tab === "bewerbungen") renderTracker();
   }
   document.querySelectorAll(".nav-btn").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
