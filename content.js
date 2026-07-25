@@ -391,6 +391,13 @@
     if (p.name) {
       dom.revealContactForm(portal, document);
       box = await waitFor(() => dom.findMessageBox(portal, document), CFG.FORM_TIMEOUT_MS || 5000);
+      // QUA-06: Lokaler Selbsttest – auf einer per URL-REGEX erkannten
+      // Anzeigenseite muss ein Kontaktformular auffindbar sein. Nur diese
+      // sichere Erkennung zählt (nicht der Heuristik-Fallback, sonst würden
+      // FUN-08-artige Seiten das Signal verrauschen). Erfolg setzt zurück.
+      if (portal.listingUrlRe && portal.listingUrlRe.test(location.href)) {
+        store.bumpSelfcheck(portal.id, !!box).catch((e) => log.warn("Selbsttest nicht speicherbar:", e));
+      }
       if (box) {
         // NIE fremden Text überschreiben (setDraftIntoForm): nur der EXPLIZITE
         // „Einfügen"-Klick darf ersetzen. Profilfelder füllen ist unkritisch

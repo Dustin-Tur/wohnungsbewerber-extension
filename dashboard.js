@@ -594,6 +594,26 @@
   });
 
   /* ================= SUCHEN ================= */
+  // QUA-06: Portal-Selbsttest sichtbar machen – ein Portal-Umbau soll nicht wie
+  // „gerade keine Anzeige geöffnet" aussehen, sondern wie das, was er ist.
+  async function renderPortalHealth() {
+    const el = $("portalHealth"); if (!el) return;
+    try {
+      const sc = await store.getSelfcheck();
+      const warnFrom = (WBA.CONFIG && WBA.CONFIG.SELFCHECK_WARN_FROM) || 5;
+      const broken = portals.PORTALS.filter((p) => sc[p.id] && sc[p.id].misses >= warnFrom);
+      el.hidden = !broken.length;
+      el.textContent = "";
+      broken.forEach((p) => {
+        const div = document.createElement("div");
+        div.className = "note note-key";
+        div.style.marginBottom = "12px";
+        div.textContent = tr("health.warn", { portal: p.name, n: sc[p.id].misses });
+        el.appendChild(div);
+      });
+    } catch (e) { (WBA.log || console).warn("Portal-Selbsttest nicht lesbar:", e); }
+  }
+
   function renderPortals() {
     const box = $("portalGrid"); box.innerHTML = "";
     // Anzeige nach Bekanntheit sortiert (Logik bleibt id-basiert, Array-Reihenfolge egal).
@@ -1044,6 +1064,7 @@
     historyList = await store.getHistory();
     await loadFilters();
     renderChecklist(); renderHistory(); updateProfileUI(); syncGenerateLabel();
+    renderPortalHealth();
     const tab = (location.hash || "").replace("#", "");
     if (TABS.includes(tab)) showTab(tab);
     renderTracker();

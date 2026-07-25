@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>QUA-06-Fixture – Anzeigenseite OHNE Kontaktformular</title>
+<meta name="description" content="Simuliert einen Portal-Umbau: die URL matcht listingUrlRe, aber der msgSel greift nicht mehr.">
+</head>
+<body>
+<!-- QUA-06-Verifikation: Wie overlay-demo.html, aber das Kontaktformular fehlt
+     (Portal hat „umgebaut"). Erwartung: content.js zählt einen Selbsttest-
+     Fehlschlag (wba_selfcheck.demo.misses++), Overlay zeigt den noForm-Hinweis.
+     Der Dateiname matcht bewusst die listingUrlRe /overlay-demo/i des
+     Demo-Adapters. -->
+<main>
+  <h1 id="demo-title">Schöne 3-Zimmer-Wohnung in Köln-Nippes</h1>
+  <div id="demo-price">950 € Kaltmiete</div>
+  <div id="demo-desc">Helle 3-Zimmer-Wohnung, 72 m². Kontakt jetzt hinter neuem Widget, das der Adapter nicht kennt.</div>
+</main>
+
+<script src="/lib/config.js"></script>
+<script src="/lib/i18n.js"></script>
+<script src="/lib/icons.js"></script>
+<script src="/lib/parse.js"></script>
+<script src="/lib/salutation.js"></script>
+<script src="/lib/letter.js"></script>
+<script src="/lib/portals.js"></script>
+<script src="/lib/store.js"></script>
+<script src="/lib/ai.js"></script>
+<script>
+  // Demo-Adapter wie in overlay-demo.html – msgSel/sendSel greifen hier ins Leere.
+  WBA.portals.PORTALS.push({
+    id: "demo", name: "Demo-Portal", host: /localhost|127\.0\.0\.1/i,
+    searchHome: location.href, buildSearchUrl() { return location.href; },
+    listingUrlRe: /overlay-demo/i, resultsUrlRe: /overlay-demo-results/i,
+    scrapeSel: "a", contentSel: "#demo-title, #demo-price, #demo-desc",
+    msgSel: "#demo-msg", sendSel: "#demo-send", sendText: /nachricht senden/i,
+  });
+  WBA.store.getProfile = async () => ({ name: "Alina Raphelt" });
+  WBA.store.getDocs = async () => ({});
+  WBA.store.getLang = async () => null;
+  WBA.store.getRun = async () => null;
+</script>
+<script src="/content.js"></script>
+</body>
+</html>
