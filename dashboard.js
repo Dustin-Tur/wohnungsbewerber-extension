@@ -949,6 +949,23 @@
     });
   }
   $("trackerFilter").addEventListener("change", renderTracker);
+  // LEG-13: Sammel-Aufräumen – Einträge älter als TRACKER_CLEANUP_AGE_DAYS ohne
+  // Antwort/Besichtigung. Zählung vorab nur für die ehrliche Bestätigung; die
+  // eigentliche Entscheidung fällt atomar unter dem Mutex (store.cleanupTracker).
+  $("cleanupTracker").addEventListener("click", async () => {
+    const days = (WBA.CONFIG && WBA.CONFIG.TRACKER_CLEANUP_AGE_DAYS) || 90;
+    const cutoff = Date.now() - days * 86400000;
+    const KEEP = ["antwort", "besichtigung"];
+    const list = await store.getTracker();
+    const stale = list.filter((e) => (e.ts || 0) < cutoff && KEEP.indexOf(e.status) < 0).length;
+    if (!stale) { toast(tr("tracker.cleanupNone", { days }), "info"); return; }
+    if (!confirm(tr("tracker.cleanupConfirm", { n: stale, days }))) return;
+    try {
+      const removed = await store.cleanupTracker(cutoff, KEEP);
+      toast(tr("tracker.cleanupDone", { n: removed }), "ok");
+    } catch (e) { saveErrToast(e); }
+    renderTracker();
+  });
   $("exportTracker").addEventListener("click", async () => {
     const list = await store.getTracker();
     if (!list.length) { toast(tr("tracker.nothingToExport"), "info"); return; }
@@ -1086,6 +1103,16 @@
     docsState = await store.getDocs();
     if ($("noSchufa")) $("noSchufa").checked = !!docsState.noSchufa;
     historyList = await store.getHistory();
+    // LEG-13: Verlauf automatisch begrenzen – Anschreiben mit Einkommens- und
+    // Kontaktdaten sollen nicht unbegrenzt überdauern.
+    {
+      const maxAge = ((WBA.CONFIG && WBA.CONFIG.HISTORY_MAX_AGE_DAYS) || 90) * 86400000;
+      const pruned = historyList.filter((e) => !e.ts || Date.now() - e.ts <= maxAge);
+      if (pruned.length !== historyList.length) {
+        historyList = pruned;
+        store.setHistory(historyList).catch(saveErrToast);
+      }
+    }
     await loadFilters();
     renderChecklist(); renderHistory(); updateProfileUI(); syncGenerateLabel();
     renderPortalHealth();
