@@ -74,6 +74,11 @@
   // Escapt auch Quotes (SEC-06): heute stehen alle dynamischen Werte in Textknoten,
   // aber ein künftiges `attr="${esc(x)}"` wäre sonst ein Attribut-Breakout.
   function esc(s) { return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
+  // SEC-07: Namen Dritter (Vermieter/Ansprechpartner) gehören nicht im Klartext in
+  // die Konsole – sie tauchen sonst in Bildschirmfreigaben und Support-Screenshots
+  // auf. Debug-Ausgaben zeigen deshalb nur Initialen bzw. die Kategorie.
+  function anonName(s) { return String(s || "").split(/\s+/).filter(Boolean).map((w) => w[0] + "…").join(" "); }
+  function anonSalut(c) { return c ? c.category + (c.name ? " (" + anonName(c.name) + ")" : "") : c; }
   // Statische Inline-SVG-Icons (lib/icons.js) – kein Nutzer-Input, innerHTML-sicher.
   const ic = (name, size) => (WBA.icons ? WBA.icons.svg(name, size || 13) : "");
   // Einheitliche Kopfzeile des Overlays (Logo-Kachel, Name, Version, Fenster-Knöpfe).
@@ -310,7 +315,7 @@
     const t = parse.extractContact(parse.pageTextForContact());
     if (t && t.name) cands.push(sal.classify(t.anrede + " " + t.name));
     const best = sal.pickBest(cands);
-    log.debug("Anrede-Kandidaten:", strings, "→", best);
+    log.debug("Anrede-Kandidaten:", strings.map(anonName), "→", anonSalut(best));
     return best;
   }
 
@@ -385,7 +390,7 @@
         // Name) in die Anrede-Zeile des Entwurfs UND des Formulars übernehmen.
         const better = resolveContact();
         if (salutScore(better) > salutScore(currentSalut)) {
-          log.debug("Bessere Anrede-Quelle nach Formular-Öffnung:", better);
+          log.debug("Bessere Anrede-Quelle nach Formular-Öffnung:", anonSalut(better));
           currentSalut = better;
           generated = replaceGreetingLine(generated, WBA.salutation.greeting(currentSalut, tone));
           if (filled) setDraftIntoForm(box, generated);
