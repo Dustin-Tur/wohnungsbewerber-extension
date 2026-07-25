@@ -703,6 +703,9 @@
       if (location.href === lastUrl) return;
       lastUrl = location.href;
       removeHost();        // Overlay gehört zur alten Seite
+      // Puls-Markierung auch OPTISCH entfernen: Immowelt/ImmoScout behalten DOM-Teile
+      // über SPA-Navigationen – sonst pulsiert ein Button der alten Ansicht weiter (FUN-14).
+      if (highlighted) highlighted.classList.remove("wba-cp-pulse");
       highlighted = null;  // hervorgehobener Senden-Button ebenso
       currentSalut = null; // Anrede der alten Anzeige verwerfen
       lastInserted = "";   // „unser Text im Formular"-Marker gilt nur je Anzeige
