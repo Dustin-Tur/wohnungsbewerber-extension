@@ -744,7 +744,8 @@
     } else {
       track.classList.add("is-empty");
       val.classList.add("is-muted");
-      val.textContent = tr("stats.tooFew", { n: g.applied, min: minGroup });
+      // Singular/Plural wie bei tracker.statReply/statReplies (UX-11).
+      val.textContent = g.applied === 1 ? tr("stats.tooFewOne", { min: minGroup }) : tr("stats.tooFew", { n: g.applied, min: minGroup });
     }
     row.append(name, track, val);
     return row;
