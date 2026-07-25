@@ -518,13 +518,30 @@
       else flashMsg(tr("ov.noFormFound"), true);
     });
     on("reroll", async () => {
-      const cf = currentFlat();
-      // generate() prüft gegen die Fingerprints der letzten Texte (inkl. des gerade
-      // angezeigten) → „Neu" liefert garantiert eine spürbar andere Variante.
-      generated = await letter.generate(state.profile, cf, (state.run && state.run.tone) || state.filters.ton || "standard", cf.info, { docs: state.docs });
-      if (ta()) ta().value = generated;
-      // auch ins echte Formular übernehmen – aber nur, wenn dort UNSER Text steht
-      setDraftIntoForm(dom.findMessageBox(portal, document), generated);
+      const btn = panel.querySelector('[data-act="reroll"]');
+      if (btn && btn.disabled) return; // Doppelklick = doppelter (ggf. kostenpflichtiger) KI-Call
+      if (btn) btn.disabled = true;
+      try {
+        const cf = currentFlat();
+        const tone = (state.run && state.run.tone) || state.filters.ton || "standard";
+        // Gleiche Logik wie bei der Erst-Generierung und im Dashboard (FUN-12):
+        // KI bevorzugt, Vorlage als Rückfall – wer für die KI zahlt, bekommt beim
+        // „Neu"-Klick nicht mehr stillschweigend den Vorlagentext. Blacklist gilt
+        // auch für KI-Texte.
+        let text = "";
+        if (state.aiReady && WBA.ai) {
+          try { text = (await WBA.ai.request({ profile: state.profile, flat: cf, mode: tone, info: cf.info, docs: state.docs })) || ""; }
+          catch (e) { log.debug("KI-Anfrage fehlgeschlagen, nutze Generator:", e); text = ""; }
+          if (text && letter.containsBlacklisted(text, state.profile.about)) text = "";
+        }
+        // generate() prüft gegen die Fingerprints der letzten Texte (inkl. des gerade
+        // angezeigten) → der Vorlagen-Rückfall liefert garantiert eine andere Variante.
+        if (!text) text = await letter.generate(state.profile, cf, tone, cf.info, { docs: state.docs });
+        generated = text;
+        if (ta()) ta().value = generated;
+        // auch ins echte Formular übernehmen – aber nur, wenn dort UNSER Text steht
+        setDraftIntoForm(dom.findMessageBox(portal, document), generated);
+      } finally { if (btn) btn.disabled = false; }
     });
     on("copy", async () => { try { await navigator.clipboard.writeText(ta() ? ta().value : generated); flashMsg(tr("ov.copied")); } catch (e) { flashMsg(tr("ov.copyFailed"), true); } });
     on("send", scrollToSend);
