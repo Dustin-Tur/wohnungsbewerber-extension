@@ -33,6 +33,11 @@ function openOrFocusDashboard(hash) {
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  // Nur eigene Kontexte (Content-Scripts, Dashboard, Popup) dürfen den Worker
+  // steuern. Ohne externally_connectable ist das heute schon so – der Check
+  // schützt davor, dass eine künftige Manifest-Änderung diese Annahme
+  // unbemerkt aushebelt (EXT-05).
+  if (!sender || sender.id !== chrome.runtime.id) return;
   if (!msg || !msg.type) return;
 
   if (msg.type === "openDashboard") {
