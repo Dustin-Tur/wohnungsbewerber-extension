@@ -180,6 +180,29 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     toast(tr("export.done"), "ok");
   }
+  // QUA-05: Sicherung einlesen – Gegenstück zum JSON-Export (LEG-12). Damit sind
+  // Gerätewechsel und Chrome-Neuinstallation ohne Datenverlust möglich.
+  function importAllData() {
+    const inp = document.createElement("input");
+    inp.type = "file"; inp.accept = "application/json,.json";
+    inp.addEventListener("change", async () => {
+      const file = inp.files && inp.files[0]; if (!file) return;
+      let data = null;
+      try {
+        const parsed = JSON.parse(await file.text());
+        if (parsed && parsed.data && typeof parsed.data === "object") data = parsed.data;
+      } catch (e) { data = null; }
+      // Nur bekannte wba_*-Schlüssel übernehmen – kein fremder Ballast.
+      const known = Object.values(store.KEYS);
+      const clean = {};
+      if (data) Object.keys(data).forEach((k) => { if (known.indexOf(k) >= 0) clean[k] = data[k]; });
+      if (!Object.keys(clean).length) { toast(tr("import.invalid"), "error"); return; }
+      if (!confirm(tr("import.confirm", { n: Object.keys(clean).length }))) return;
+      try { await store.set(clean); } catch (e) { saveErrToast(e); return; }
+      location.reload(); // konsistent aus dem neuen Stand initialisieren
+    });
+    inp.click();
+  }
   function clearAllData() {
     if (!confirm(tr("profile.clearAllConfirm"))) return;
     clearTimeout(profileSaveTimer); profileSaveTimer = null;
@@ -199,6 +222,7 @@
   $("clearProfile").addEventListener("click", clearProfile);
   $("clearAllData").addEventListener("click", clearAllData);
   $("exportAllData").addEventListener("click", exportAllData);
+  $("importAllData").addEventListener("click", importAllData);
   ["flatDesc","contactName"].forEach((id) => $(id).addEventListener("input", saveFlat));
   $("contactAnrede").addEventListener("change", saveFlat);
   $("employment").addEventListener("change", renderChecklist);
