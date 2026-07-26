@@ -4,8 +4,8 @@
     "description": "Extension name in the Chrome Web Store and toolbar. German brand kept first, English keyword suffix for expat search (ASO)."
   },
   "extDescription": {
-    "message": "Renting in Germany? Get your rental application letter written in German — you only fill in an English form. Local & free.",
-    "description": "Short description (max. 132 chars) shown under the name in the store. English keywords for expat search."
+    "message": "Renting in Germany? Your rental application letter in German – local & free; optional AI only with your own API key.",
+    "description": "Short description (max. 132 chars) shown under the name in the store. English keywords for expat search. Since 2.7.0 (EXT-07) the optional AI is named explicitly – „local“ alone was misleading once AI is enabled."
   },
   "actionTitle": {
     "message": "Open WohnungsBewerber",

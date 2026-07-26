@@ -4,8 +4,8 @@
     "description": "Name der Erweiterung im Chrome Web Store und in der Toolbar. Marken-Zusatz „Anschreiben & Bewerbung“ für die Store-Suche (ASO)."
   },
   "extDescription": {
-    "message": "Anschreiben & Bewerbung für WG-Gesucht, ImmoScout, Kleinanzeigen & Immowelt. Lokal & kostenlos – du prüfst und sendest selbst.",
-    "description": "Kurzbeschreibung (max. 132 Zeichen) unter dem Namen im Store. Enthält bewusst die Portalnamen als Suchbegriffe."
+    "message": "Anschreiben & Bewerbung für WG-Gesucht, ImmoScout, Kleinanzeigen & Immowelt. Lokal, kostenlos; KI optional mit eigenem Schlüssel.",
+    "description": "Kurzbeschreibung (max. 132 Zeichen) unter dem Namen im Store. Enthält bewusst die Portalnamen als Suchbegriffe. Seit 2.7.0 (EXT-07) wird die optionale KI ausdrücklich genannt – „Lokal“ allein war bei aktivierter KI irreführend."
   },
   "actionTitle": {
     "message": "WohnungsBewerber öffnen",
