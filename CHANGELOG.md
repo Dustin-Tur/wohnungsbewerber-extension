@@ -45,9 +45,24 @@ bestätigen — vorher macht die KI schlicht nichts.
   10 Minuten (FUN-04), Fehlklicks bei „Antwort erhalten" sind korrigierbar
   (FUN-15), dazu FUN-09–14 (Kopier-Rückmeldung, Demo-Persistenz, Sprach-Reset,
   Overlay-„Neu"-Knopf, Mietrechner-Dezimalfehler, SPA-Reste).
+- **Neu: du entscheidest, was im Brief steht.** Zwei Häkchen im Profil
+  bestimmen, ob **Einkommen** und **Beschäftigungsstatus** im Anschreiben
+  genannt werden — beide standardmäßig an, für Bestandsnutzer ändert sich also
+  nichts. Rechtlich sind diese Angaben vor Vertragsschluss meist nicht
+  geschuldet; bisher entschied das Werkzeug es für dich (bei Bürgergeld nannten
+  40 von 40 Briefen den Bezug). Die Werte bleiben gespeichert und erscheinen
+  weiterhin in der Mieterselbstauskunft-PDF — der Schalter wirkt nur auf
+  Anschreiben, Vorlage wie KI (LEG-04).
 - **Anschreiben-Grammatik:** Bei genau einer vorbereiteten Unterlage steht das
   Verb jetzt im Singular — „meine Selbstauskunft liegt bereit" statt „liegen"
   (FUN-07, mit deterministischen Kongruenz-Tests).
+- **Ehrlichere Texte nach außen:** Die Store-Kurzbeschreibung nennt die
+  optionale KI ausdrücklich statt pauschal „Lokal" (EXT-07), Store-Listing und
+  Website-Footer weisen die Unabhängigkeit von den Portalen aus (LEG-08/EXT-08),
+  und die Datenschutzerklärung ist wieder deckungsgleich mit dem Code: Daten
+  Dritter benannt (LEG-02), die entfernte `scripting`-Berechtigung gestrichen,
+  Anthropic als optionale Berechtigung gekennzeichnet, Löschung/Export/
+  Verfallsregeln vollständig beschrieben (LEG-07, Stand 26.07.2026).
 - **Frühwarnsystem:** Ein lokaler Selbsttest zählt je Portal, wie oft eine
   Anzeigenseite ohne Kontaktformular endet, und warnt im Dashboard ab 5
   Fehlschlägen — so fällt ein Portal-Umbau auf, bevor Support-Mails kommen
