@@ -4,7 +4,9 @@ Referenzen wie „A1", „B4" verweisen auf die Befund-Nummern in `AUDIT.md`.
 Referenzen wie „SEC-01", „FUN-03" (ab 2.7.0) sind die Befund-IDs des
 Voll-Audits vom 25.07.2026; sie stehen auch in den Commit-Betreffs.
 
-## Unveröffentlicht
+## 2.8.0 — 2026-07-26 · Zweite Person im Haushalt, mehr Satzvarianz
+
+2.7.0 war fertig gebaut, aber nie im Store – dieses Paket enthält beides.
 
 ### Zweite Person im Profil (Paare, WGs, Familien)
 
