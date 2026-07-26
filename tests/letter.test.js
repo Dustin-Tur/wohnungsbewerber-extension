@@ -18,10 +18,10 @@
   }
   if (!isNode) ObjC.import("Foundation");
   G.self = G;
-  ["lib/parse.js", "lib/salutation.js", "lib/letter.js", "lib/ai.js"].forEach(function (f) {
+  ["lib/parse.js", "lib/salutation.js", "lib/letter.js", "lib/ai.js", "lib/store.js"].forEach(function (f) {
     (new Function(readFile(f))).call(G);
   });
-  var L = G.WBA.letter, S = G.WBA.salutation, AI = G.WBA.ai;
+  var L = G.WBA.letter, S = G.WBA.salutation, AI = G.WBA.ai, ST = G.WBA.store;
 
   /* ---------- Mini-Testrunner ---------- */
   var failures = [], count = 0;
@@ -209,6 +209,191 @@
   ok("Blacklist erkennt Floskel mit Satzzeichen", !!L.containsBlacklisted("Ihre Anzeige hat mein Interesse geweckt!"));
   ok("Blacklist ignoriert Nutzertext", !L.containsBlacklisted("Hiermit bewerbe ich mich.", "Hiermit bewerbe ich mich."));
   ok("Sauberer Text passiert", !L.containsBlacklisted("Ihre Wohnung in Nippes klingt großartig."));
+
+  /* ---------- Zweite Person im Haushalt (Paar / WG / Familie) ---------- */
+
+  var P2 = Object.assign({}, P, {
+    p2Rel: "partnerin", p2Name: "Anna Schulz", p2Job: "Krankenpflegerin",
+    p2Employment: "unbefristet", p2Income: "1.500 €",
+  });
+
+  // Kasus-Tabelle: der Dativ darf nicht aus dem Nominativ geraten werden.
+  var pi = L.partnerInfo(P2);
+  ok("partnerInfo: Nominativ mit Name", pi.nom === "meine Partnerin Anna Schulz", pi.nom);
+  ok("partnerInfo: Dativ gebeugt", pi.dat === "meiner Partnerin Anna Schulz", pi.dat);
+  ok("partnerInfo: nur Name, keine Beziehung", L.partnerInfo({ p2Name: "Kim" }).nom === "Kim");
+  ok("partnerInfo: ohne Angaben null", L.partnerInfo({}) === null);
+  ok("partnerInfo: leere Strings zählen nicht", L.partnerInfo({ p2Name: "  ", p2Rel: "" }) === null);
+  Object.keys(L.REL).forEach(function (k) {
+    var r = L.REL[k];
+    ok("REL " + k + ": Dativ unterscheidet sich vom Nominativ", r.dat !== r.nom, r.nom + " / " + r.dat);
+    ok("REL " + k + ": Dativ endet auf -r oder -m", /(?:er|em)\s\S+$/.test(r.dat), r.dat);
+  });
+
+  // Über viele Texte prüfen, weil die Bausteine zufällig gewählt werden.
+  var MODES = ["standard", "formal", "kurz", "herzlich", "selbstbewusst"];
+  var texte = [], texteOhne = [];
+  for (var i = 0; i < 60; i++) {
+    texte.push(L.buildLetter(P2, FLAT, MODES[i % 5], INFO, {}));
+    texteOhne.push(L.buildLetter(P, FLAT, MODES[i % 5], INFO, {}));
+  }
+  ok("Zweite Person wird in jedem Text genannt",
+     texte.every(function (t) { return t.indexOf("Anna Schulz") > -1; }));
+  ok("Ohne zweite Person taucht kein Name auf",
+     texteOhne.every(function (t) { return t.indexOf("Anna Schulz") < 0; }));
+  // Gezielt die Allein-Varianten aus household() – NICHT jedes „allein“:
+  // „allein der Balkon zaubert mir ein Lächeln“ ist ein anderer, erlaubter Satz.
+  var ALLEIN = /(allein(e)? einziehen|einziehen würde ich allein|ziehe allein(e)? ein|einziehen möchte ich allein|allein hier wohnen)/i;
+  ok("Nie „alleine einziehen“, wenn jemand mitzieht",
+     texte.every(function (t) { return !ALLEIN.test(t); }),
+     (texte.filter(function (t) { return ALLEIN.test(t); })[0] || "").slice(0, 160));
+
+  ok("Beide unterschreiben",
+     texte.every(function (t) { return /Max Müller und Anna Schulz/.test(t); }),
+     texte[0].slice(-160));
+  ok("Gemeinsames Einkommen wird korrekt summiert (3.200 + 1.500)",
+     texte.every(function (t) { return t.indexOf("4.700 €") > -1; }),
+     texte[0]);
+  ok("Die Summe wird nie als eigenes Gehalt ausgegeben",
+     texte.every(function (t) { return !/ich verdiene 4\.700/.test(t) && !/Mein Einkommen von 4\.700/.test(t); }));
+  ok("Beruf der zweiten Person kommt vor",
+     texte.filter(function (t) { return t.indexOf("Krankenpflegerin") > -1; }).length === texte.length);
+
+  // Grammatik-Falle: „mit meine Partnerin“ darf nie entstehen.
+  ok("Kein falscher Kasus nach Präposition",
+     texte.every(function (t) { return !/\b(mit|von|bei|zu)\s+(meine|mein)\s/i.test(t); }),
+     (texte.filter(function (t) { return /\b(mit|von|bei|zu)\s+(meine|mein)\s/i.test(t); })[0] || "").slice(0, 140));
+
+  // Qualitätsschranken müssen auch mit zweiter Person halten.
+  ok("Keine Floskel aus der Blacklist",
+     texte.every(function (t) { return !L.containsBlacklisted(t, P2.about); }));
+  ok("Längenkorridor je Tonlage eingehalten", texte.every(function (t, i) {
+    var r = L.RANGE[MODES[i % 5]];
+    var w = t.trim().split(/\s+/).length;
+    return w >= r[0] - 12 && w <= r[1] + 12;
+  }), (function () {
+    var s = "";
+    texte.forEach(function (t, i) {
+      var r = L.RANGE[MODES[i % 5]], w = t.trim().split(/\s+/).length;
+      if (!s && (w < r[0] - 12 || w > r[1] + 12)) s = MODES[i % 5] + ": " + w + " Wörter (" + r + ")";
+    });
+    return s;
+  })());
+
+  // Nur Name, keine Beziehung: kein erfundenes Geschlecht, kein Pronomen.
+  var nurName = [];
+  for (var j = 0; j < 20; j++) nurName.push(L.buildLetter(Object.assign({}, P, { p2Name: "Kim Berger", p2Income: "1.500 €" }), FLAT, "standard", INFO, {}));
+  ok("Nur Name: Person wird genannt", nurName.every(function (t) { return t.indexOf("Kim Berger") > -1; }));
+  ok("Nur Name: keine erfundene Beziehung",
+     nurName.every(function (t) { return !/(Partnerin|Partner|Mitbewohner|Ehefrau|Ehemann)/i.test(t); }),
+     (nurName.filter(function (t) { return /(Partnerin|Partner)/i.test(t); })[0] || "").slice(0, 120));
+
+  // Nur Einkommen der zweiten Person (eigenes fehlt) – keine kaputte Summe.
+  var nurP2Geld = L.buildLetter(Object.assign({}, P, { income: "", p2Rel: "partner", p2Name: "Ben", p2Income: "2.000 €" }), FLAT, "standard", INFO, {});
+  ok("Ohne eigenes Einkommen wird nicht summiert", nurP2Geld.indexOf("2.000 €") > -1 && nurP2Geld.indexOf("NaN") < 0, nurP2Geld);
+
+  // Persons-Angabe darf der zweiten Person nicht widersprechen.
+  var einsAberZuZweit = L.buildLetter(Object.assign({}, P2, { persons: "1" }), FLAT, "standard", INFO, {});
+  ok("persons=1 plus zweite Person ergibt keinen Allein-Satz", !/allein/i.test(einsAberZuZweit), einsAberZuZweit);
+
+  /* ---------- LEG-04: Die Datenschutz-Schalter gelten für beide Personen ----------
+     Sonst wäre die Summe aus zwei Einkommen ein Umweg um die Entscheidung,
+     das eigene Einkommen nicht zu nennen. */
+  var gesperrt = ST.letterProfile(Object.assign({}, P2, { hideIncome: true }));
+  ok("hideIncome leert auch das Einkommen der zweiten Person",
+     gesperrt.income === "" && gesperrt.p2Income === "", JSON.stringify({ i: gesperrt.income, p2: gesperrt.p2Income }));
+  var gesperrt2 = ST.letterProfile(Object.assign({}, P2, { hideEmployment: true }));
+  ok("hideEmployment leert auch die Beschäftigung der zweiten Person",
+     gesperrt2.employment === "" && gesperrt2.p2Employment === "");
+  ok("Ohne Sperre bleiben beide Angaben stehen",
+     ST.letterProfile(P2).p2Income === "1.500 €");
+
+  var briefeGesperrt = [];
+  for (var s = 0; s < 20; s++) briefeGesperrt.push(L.buildLetter(gesperrt, FLAT, "standard", INFO, {}));
+  ok("Mit Sperre steht keine Einkommenssumme im Brief",
+     briefeGesperrt.every(function (t) { return t.indexOf("4.700") < 0 && t.indexOf("1.500") < 0 && t.indexOf("3.200") < 0; }),
+     briefeGesperrt[0]);
+  ok("Mit Sperre wird die zweite Person trotzdem genannt",
+     briefeGesperrt.every(function (t) { return t.indexOf("Anna Schulz") > -1; }));
+
+  /* ---------- KI-Prompt kennt die zweite Person ---------- */
+  var prompt2 = AI.buildPrompt(P2, FLAT, "standard", INFO, {});
+  ok("Prompt nennt die zweite Person", prompt2.indexOf("Anna Schulz") > -1);
+  ok("Prompt gibt die Beziehung mit Kasus-Auftrag vor", /meine Partnerin \(genau so bezeichnen/.test(prompt2));
+  ok("Prompt verlangt beide Unterschriften", /beiden Namen/.test(prompt2));
+  ok("Prompt verbietet die Einkommens-Verschmelzung", /NICHT als eines/.test(prompt2));
+  var promptOhne = AI.buildPrompt(P, FLAT, "standard", INFO, {});
+  ok("Ohne zweite Person kein Zusatzblock im Prompt", promptOhne.indexOf("Zweite einziehende Person") < 0);
+  var promptNurName = AI.buildPrompt(Object.assign({}, P, { p2Name: "Kim Berger" }), FLAT, "standard", INFO, {});
+  ok("Nur Name: Prompt verbietet erfundene Beziehung", /Erfinde KEINE Beziehung/.test(promptNurName));
+
+  /* ---------- Sprachqualität über einen breiten Korpus ----------
+     Diese Prüfungen sind aus echten Funden entstanden: „Bei die Einbauküche
+     musste ich …" (Kasus), zweimal derselbe Satz im Brief, zwei Absätze
+     hintereinander mit demselben Auftakt. Sie laufen über viele Kombinationen,
+     weil die Fehler erst im Zusammenspiel der Bausteine entstehen. */
+
+  var KORPUS_PROFILE = [
+    P2,
+    { name: "Kim Berg", email: "k@b.de" },
+    { name: "Hannelore Schäfer", age: "68", employment: "rente", income: "1.900 €", persons: "1", pets: "keine", email: "h@s.de", city: "Bonn" },
+    { name: "Tim Vogt", age: "29", employment: "buergergeld", persons: "1", email: "t@v.de" },
+    { name: "Deniz Yılmaz", age: "41", job: "Grafikdesigner", employment: "selbststaendig", income: "2.800 €", persons: "3", pets: "ein Hund", email: "d@y.de" },
+    { name: "Nele Kraus", age: "19", employment: "azubi", income: "1.100 €", persons: "1", email: "n@k.de" },
+  ];
+  // Details in Ein- und Mehrzahl, damit Kasus UND Numerus abgedeckt sind.
+  var KORPUS_INFO = [
+    { zimmer: "3", groesse: "72", ort: "Köln-Nippes", frei: "01.09.2026", features: ["der Balkon", "die Einbauküche"] },
+    { zimmer: "2", ort: "Berlin", frei: "sofort", features: ["die Einbauküche"] },
+    { zimmer: "4", ort: "Hamburg", features: ["der Garten"] },
+    { groesse: "48", features: [] },
+    {},
+  ];
+  var korpus = [];
+  KORPUS_PROFILE.forEach(function (prof) {
+    TONES.forEach(function (tone) {
+      for (var ki = 0; ki < 6; ki++) {
+        korpus.push({ tone: tone, text: L.buildLetter(prof, FLAT, tone, KORPUS_INFO[ki % KORPUS_INFO.length], { docs: DOCS }) });
+      }
+    });
+  });
+
+  // 1) Kasus: Nach Dativ-Präpositionen darf keine unflektierte Nominativform stehen.
+  var KASUS = /\b(mit|bei|von|zu|nach|seit|aus|wegen)\s+(die|das)\s+[A-ZÄÖÜ]/;
+  var kasusFehler = korpus.filter(function (b) { return KASUS.test(b.text.replace(/\n/g, " ")); });
+  ok("Kein Kasusfehler nach Dativ-Präposition (" + korpus.length + " Briefe)",
+     kasusFehler.length === 0,
+     kasusFehler.length ? (kasusFehler[0].text.replace(/\n/g, " ").match(KASUS) || [""])[0] + " …" : "");
+
+  // 2) Kein Satz zweimal im selben Brief.
+  var doppelt = [];
+  korpus.forEach(function (b) {
+    var s = b.text.replace(/\n/g, " ").split(/(?<=[.!?])\s+/).map(function (x) { return x.trim(); })
+      .filter(function (x) { return x.length > 12; });
+    var z = {};
+    s.forEach(function (x) { z[x] = (z[x] || 0) + 1; if (z[x] > 1 && doppelt.length < 3) doppelt.push(x); });
+  });
+  ok("Kein Satz doppelt im selben Brief", doppelt.length === 0, doppelt[0] || "");
+
+  // 3) Keine zwei aufeinanderfolgenden Absätze mit gleichem Auftakt.
+  var auftakte = [];
+  korpus.forEach(function (b) {
+    var ab = b.text.split("\n\n").slice(1, -1);
+    var st = ab.map(function (a) { return a.trim().toLowerCase().split(/\s+/).slice(0, 2).join(" "); });
+    for (var i = 0; i < st.length - 1; i++) if (st[i] === st[i + 1] && auftakte.length < 3) auftakte.push(st[i]);
+  });
+  ok("Keine zwei Absätze mit identischem Auftakt", auftakte.length === 0, auftakte[0] || "");
+
+  // 4) Keine Platzhalter oder kaputten Interpolationen im Text.
+  var kaputt = korpus.filter(function (b) { return /undefined|NaN|\$\{|\bnull\b/.test(b.text); });
+  ok("Keine unaufgelösten Variablen im Text", kaputt.length === 0, kaputt.length ? kaputt[0].text.slice(0, 120) : "");
+
+  // 5) Sauberes Satzbild: keine doppelten Leerzeichen, kein Leerzeichen vor Satzzeichen.
+  var typo = korpus.filter(function (b) {
+    var z = b.text.split("\n").join("§");
+    return /[^§] {2,}/.test(z) || /\s[.,;]/.test(z) || /\.\s*\./.test(z);
+  });
+  ok("Sauberes Satzbild (Leerzeichen, Satzzeichen)", typo.length === 0, typo.length ? typo[0].text.slice(0, 160) : "");
 
   /* ---------- Ergebnis ---------- */
   var summary = failures.length

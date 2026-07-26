@@ -4,6 +4,92 @@ Referenzen wie „A1", „B4" verweisen auf die Befund-Nummern in `AUDIT.md`.
 Referenzen wie „SEC-01", „FUN-03" (ab 2.7.0) sind die Befund-IDs des
 Voll-Audits vom 25.07.2026; sie stehen auch in den Commit-Betreffs.
 
+## Unveröffentlicht
+
+### Zweite Person im Profil (Paare, WGs, Familien)
+
+Bisher konnte man nur die *Anzahl* der einziehenden Personen angeben – wer der
+zweite Mensch ist und ob zwei Einkommen die Miete tragen, blieb offen. Genau
+das wollen Vermietungen aber wissen.
+
+- **Profil:** neuer optionaler Block mit Beziehung (Partner:in, Ehepartner:in,
+  Mitbewohner:in, Tochter/Sohn), Name, Beruf, Beschäftigung und Einkommen.
+- **Anschreiben:** Die zweite Person wird namentlich genannt („Einziehen würden
+  mein Mann Jonas Brandt und ich"), Beruf und – wenn beide Einkommen
+  eingetragen sind – die korrekt addierte Haushaltssumme erscheinen als eigener
+  Satz, und **beide unterschreiben**. Die vorhandenen Vertrauens-Varianten
+  wurden nicht umgeschrieben: „ich verdiene 5.200 €" wäre bei zwei Einkommen
+  falsch, und ein Umbau hätte den Klang aller fünf Tonlagen verändert.
+- **Kasus aus einer Tabelle, nicht aus einer Regel:** „gemeinsam mit meine
+  Partnerin" kann sich eine Bewerbung nicht leisten. Ein Test prüft, dass nach
+  „mit/von/bei/zu" nie eine unflektierte Form steht.
+- **Ohne gewählte Beziehung** wird kein Geschlecht erfunden – dann trägt nur
+  der Name den Satz.
+- **LEG-04 gilt für den ganzen Haushalt:** Wer sein Einkommen nicht im
+  Anschreiben nennen will, bei dem verschwindet auch das der zweiten Person –
+  sonst wäre die Summe ein Umweg um die eigene Entscheidung.
+- **KI-Modus:** Der Prompt kennt die zweite Person, bekommt die Beziehung mit
+  Kasus-Auftrag, verlangt beide Unterschriften und verbietet ausdrücklich, zwei
+  Einkommen als eines auszugeben.
+
+### Mehr Varianz: 435 → 668 Textbausteine
+
+Zwei Bewerbungen desselben Nutzers sollen sich nicht ähneln – und keine soll
+nach Vorlage klingen. Gemessen wurde zuerst, wo es klemmt: Einstieg und
+Selbstvorstellung waren mit über 200 Absatz-Varianten schon reich, der
+**Vertrauens-Absatz kam auf 30–40, der Abschlusssatz auf 14, die Grußformel auf
+10**. Genau dort ist aufgestockt worden.
+
+| Baustein | vorher je Tonlage | jetzt |
+|---|---|---|
+| Einstieg | 15 | 21–23 |
+| Bezug zur Anzeige | 8 | 13–16 |
+| Selbstvorstellung | 14 | 18–20 |
+| Vertrauen/Einkommen | 10 | 18–19 |
+| Zusatz | 14 | 19–20 |
+| Abschluss | 14 | 24 |
+| Grußformel | 12 | 18–19 |
+
+Dazu: Unterlagen-Sätze 11 → 23, Haushalts-Formulierungen 20 → 33, Sonderfälle
+für Bürgergeld, Rente, Selbstständigkeit und Ausbildung je 4–5 → 9–10, Sätze zur
+zweiten Person 3 → 7. Die rechnerische Untergrenze der Kombinationen steigt von
+rund 39,5 Mio. auf rund 726 Mio.
+
+Wirkung, gemessen über je 600 Briefe pro Tonlage mit identischem Profil:
+
+| | vorher | nachher |
+|---|---|---|
+| verschiedene Sätze je Tonlage | ~150 | 234–259 |
+| Varianten im Vertrauens-Absatz | 30–40 | 108–169 |
+| Ø Trigramm-Überlappung | 18–24 % | 15–22 % |
+| Briefpaare mit ≥ 40 % Überlappung | 2,4–4,1 % | 0,6–1,3 % |
+
+Alle neuen Sätze laufen durch dieselben Schranken wie die alten: Floskel-
+Blacklist, höchstens 30 Wörter je Satz, ein Ausrufezeichen, keine erfundenen
+Fakten. Vier Entwürfe sind daran gescheitert und wurden umgeschrieben – drei
+behaupteten Dinge, die nicht im Profil stehen („mit Auftraggebern über Jahre"),
+einer bot eine höhere Kaution an, was § 551 BGB nicht zulässt.
+
+### Nebenbefund: Längenkorridore wurden systematisch verfehlt
+
+Beim Absichern der neuen Tests fiel auf, dass **formale Anschreiben ihren
+eigenen Korridor (120–180 Wörter) in 53,9 % der Fälle unterschritten** – im
+Mittel 118 Wörter. Ursache: Sind alle Bausteine bereits enthalten, kann
+`fitLength` einen zu kurzen Text nicht mehr strecken. `buildLetter` verwirft
+jetzt Unterlängen und würfelt neu (bis zu sechs Versuche, dann der längste
+saubere Kandidat). Gemessen über je 800 Texte pro Tonlage:
+
+| Tonlage | unter Korridor vorher | nachher |
+|---|---|---|
+| formal | 53,9 % | 1,3 % |
+| selbstbewusst | 3,4 % | 0,0 % |
+| herzlich | 3,0 % | 0,0 % |
+| standard | 2,5 % | 0,0 % |
+| kurz | 0,0 % | 0,0 % |
+
+Kein Text überschreitet seinen Korridor. Damit ist auch der sporadisch rote
+Längentest in `tests/letter.test.js` erledigt (vorher ~15 % der Läufe).
+
 ## 2.7.0 — 2026-07-26 · Audit-Umsetzung: Sicherheit, Verlässlichkeit, Datenrechte
 
 57 von 70 Befunden eines vollständigen Audits behoben (6 Umsetzungswellen).

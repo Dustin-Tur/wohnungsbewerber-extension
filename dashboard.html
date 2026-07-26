@@ -267,6 +267,45 @@
           <span data-i18n="profile.tellEmployment">Beschäftigungsstatus im Anschreiben nennen</span>
         </label>
         <p style="font-size:.78rem;color:var(--muted);margin:8px 0 0" data-i18n="profile.tellNote">Beides ist freiwillig — rechtlich musst du diese Angaben vor Vertragsschluss meist nicht machen. Mit Angabe wirken Bewerbungen oft stärker, ohne bleibt es deine Entscheidung.</p>
+
+        <!-- Zweite Person: Paare, WGs und Familien bewerben sich gemeinsam. Die
+             Angaben landen im Anschreiben (Name, Beruf, gemeinsames Einkommen)
+             und werden von denselben Häkchen oben abgedeckt. -->
+        <details style="margin-top:14px">
+          <summary data-i18n="p2.summary">Zweite Person, die mit einzieht (optional)</summary>
+          <p style="font-size:.78rem;color:var(--muted);margin:8px 0 10px" data-i18n="p2.hint">Für Paare, WGs und Familien: Die Vermietung will wissen, wer mit einzieht und ob zwei Einkommen die Miete tragen. Ausgefüllt wird beides im Anschreiben genannt und beide unterschreiben.</p>
+          <div class="grid">
+            <div class="field">
+              <label for="p2Rel" data-i18n="p2.rel">Beziehung zu dir</label>
+              <select id="p2Rel">
+                <option value="" data-i18n="p2.relNone">keine zweite Person</option>
+                <option value="partnerin" data-i18n="p2.partnerin">meine Partnerin</option>
+                <option value="partner" data-i18n="p2.partner">mein Partner</option>
+                <option value="ehefrau" data-i18n="p2.ehefrau">meine Frau</option>
+                <option value="ehemann" data-i18n="p2.ehemann">mein Mann</option>
+                <option value="mitbewohnerin" data-i18n="p2.mitbewohnerin">meine Mitbewohnerin</option>
+                <option value="mitbewohner" data-i18n="p2.mitbewohner">mein Mitbewohner</option>
+                <option value="tochter" data-i18n="p2.tochter">meine Tochter</option>
+                <option value="sohn" data-i18n="p2.sohn">mein Sohn</option>
+              </select>
+            </div>
+            <div class="field"><label for="p2Name" data-i18n="p2.name">Voller Name</label><input id="p2Name" autocomplete="off" data-i18n-attr="placeholder:p2.namePh" placeholder="Anna Musterfrau"></div>
+            <div class="field"><label for="p2Job" data-i18n="p2.job">Beruf</label><input id="p2Job" autocomplete="off" data-i18n-attr="placeholder:profile.jobPh" placeholder="z. B. Softwareentwickler"></div>
+            <div class="field">
+              <label for="p2Employment" data-i18n="p2.employment">Beschäftigung</label>
+              <select id="p2Employment">
+                <option value="" data-i18n="emp.none">keine Angabe</option>
+                <option value="unbefristet" data-i18n="emp.unbefristet">Angestellt (unbefristet)</option>
+                <option value="befristet" data-i18n="emp.befristet">Angestellt (befristet)</option>
+                <option value="selbststaendig" data-i18n="emp.selbststaendig">Selbstständig</option>
+                <option value="azubi" data-i18n="emp.azubi">Ausbildung / Studium</option>
+                <option value="rente" data-i18n="emp.rente">Rente / Pension</option>
+                <option value="buergergeld" data-i18n="emp.buergergeld">Arbeitslos / Bürgergeld / Grundsicherung</option>
+              </select>
+            </div>
+            <div class="field"><label for="p2Income" data-i18n="p2.income">Einkommen (netto/Monat)</label><input id="p2Income" inputmode="decimal" autocomplete="off" data-i18n-attr="placeholder:profile.incomePh" placeholder="z. B. 3200 €"></div>
+          </div>
+        </details>
         <div class="field" style="margin-top:12px">
           <label for="about" data-i18n="profile.about">Kurze persönliche Beschreibung</label>
           <textarea id="about" autocomplete="off" data-i18n-attr="placeholder:profile.aboutPh" placeholder="z. B. ruhig, ordentlich, Nichtraucher, festes Arbeitsverhältnis seit 4 Jahren."></textarea>

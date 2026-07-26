@@ -44,6 +44,15 @@
       persons: "1", pets: "keine", email: "h@mail.de" },
     { name: "Deniz Yılmaz", age: "41", job: "Grafikdesigner", employment: "selbststaendig",
       income: "2.800 €", persons: "3", email: "d@mail.de", phone: "0170 987" },
+    // Gemeinsame Bewerbung: die zweite Person muss durch dieselben Qualitäts-
+    // schranken (Länge, Satzlänge, Blacklist, keine erfundenen Fakten) laufen.
+    { name: "Lena Brandt", age: "34", job: "Physiotherapeutin", employment: "unbefristet",
+      income: "2.500 €", persons: "2", pets: "keine", email: "lena@mail.de", phone: "0151 555",
+      p2Rel: "ehemann", p2Name: "Jonas Brandt", p2Job: "Elektriker",
+      p2Employment: "unbefristet", p2Income: "2.700 €" },
+    // Zweite Person nur mit Namen – kein Geschlecht, keine Beziehung bekannt.
+    { name: "Sam Winter", age: "29", job: "Buchhändler", employment: "befristet",
+      income: "2.100 €", persons: "2", email: "sam@mail.de", p2Name: "Robin Falk" },
   ];
   var INFOS = [
     { zimmer: "3", groesse: "72,5", ort: "Köln-Nippes", frei: "01.09.2026",

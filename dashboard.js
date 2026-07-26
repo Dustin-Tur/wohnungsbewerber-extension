@@ -22,7 +22,10 @@
 
   // „gender" (Anrede/Form) wurde entfernt: Das Feld floss nirgends in Anschreiben
   // oder Selbstauskunft ein – totes Formularfeld, das nur Ausfüllarbeit vortäuschte.
-  const profileFields = ["name","age","job","income","persons","pets","about","email","phone","employment","street","plz","city"];
+  const profileFields = ["name","age","job","income","persons","pets","about","email","phone","employment","street","plz","city",
+    // Zweite Person (Paar/WG/Familie) – wird wie jedes andere Profilfeld
+    // gespeichert und geladen; leer = es gibt keine zweite Person.
+    "p2Rel","p2Name","p2Job","p2Employment","p2Income"];
   let currentMode = "standard";
   let docsState = {};
   let historyList = [];
@@ -263,12 +266,20 @@
   // Bei Bürgergeld/Grundsicherung gibt es kein Erwerbseinkommen und keinen aktiven Beruf:
   // Beruf- und Einkommensfeld leeren (auch vorher Eingetragenes), sperren und ausgrauen.
   function syncEmploymentLock() {
-    const bg = $("employment") && $("employment").value === "buergergeld";
-    ["job", "income"].forEach((id) => {
-      const el = $(id); if (!el) return;
-      if (bg) el.value = "";
-      el.disabled = !!bg;
-      const field = el.closest(".field"); if (field) field.classList.toggle("locked", !!bg);
+    const paare = [
+      { sel: "employment", felder: ["job", "income"] },
+      // Dieselbe Regel für die zweite Person – sonst stünde bei ihr Beruf und
+      // Erwerbseinkommen neben „Bürgergeld".
+      { sel: "p2Employment", felder: ["p2Job", "p2Income"] },
+    ];
+    paare.forEach(({ sel, felder }) => {
+      const bg = $(sel) && $(sel).value === "buergergeld";
+      felder.forEach((id) => {
+        const el = $(id); if (!el) return;
+        if (bg) el.value = "";
+        el.disabled = !!bg;
+        const field = el.closest(".field"); if (field) field.classList.toggle("locked", !!bg);
+      });
     });
   }
   function updateProfileUI() {
