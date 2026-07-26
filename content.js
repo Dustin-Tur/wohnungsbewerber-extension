@@ -366,7 +366,10 @@
     let qIndex = queue.findIndex((e) => (e.url || "").split("#")[0] === location.href.split("#")[0]);
     if (qIndex < 0) qIndex = run ? (run.index || 0) : -1;
 
-    const p = state.profile || {};
+    // LEG-04: Anschreiben-Sicht des Profils (Einkommen/Beschäftigung nur, wenn
+    // der Nutzer sie freigegeben hat). Autofill nutzt weiter state.profile –
+    // es füllt nur Kontaktfelder und ist von der Sperre nicht betroffen.
+    const p = store.letterProfile(state.profile || {});
     generated = "";
     if (p.name) {
       // KI bevorzugt (im Hintergrund via Service-Worker), sonst der kompositorische Generator.
@@ -560,14 +563,15 @@
         // „Neu"-Klick nicht mehr stillschweigend den Vorlagentext. Blacklist gilt
         // auch für KI-Texte.
         let text = "";
+        const pl = store.letterProfile(state.profile || {}); // LEG-04, wie bei der Erst-Generierung
         if (state.aiReady && WBA.ai) {
-          try { text = (await WBA.ai.request({ profile: state.profile, flat: cf, mode: tone, info: cf.info, docs: state.docs })) || ""; }
+          try { text = (await WBA.ai.request({ profile: pl, flat: cf, mode: tone, info: cf.info, docs: state.docs })) || ""; }
           catch (e) { log.debug("KI-Anfrage fehlgeschlagen, nutze Generator:", e); text = ""; }
-          if (text && letter.containsBlacklisted(text, state.profile.about)) text = "";
+          if (text && letter.containsBlacklisted(text, pl.about)) text = "";
         }
         // generate() prüft gegen die Fingerprints der letzten Texte (inkl. des gerade
         // angezeigten) → der Vorlagen-Rückfall liefert garantiert eine andere Variante.
-        if (!text) text = await letter.generate(state.profile, cf, tone, cf.info, { docs: state.docs });
+        if (!text) text = await letter.generate(pl, cf, tone, cf.info, { docs: state.docs });
         generated = text;
         if (ta()) ta().value = generated;
         // auch ins echte Formular übernehmen – aber nur, wenn dort UNSER Text steht

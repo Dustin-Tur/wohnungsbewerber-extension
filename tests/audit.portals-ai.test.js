@@ -29,9 +29,10 @@
   G.self = G;
 
   // Nur synchron benötigte Module (kein chrome nötig).
-  ["lib/config.js", "lib/parse.js", "lib/salutation.js", "lib/portals.js", "lib/ai.js"]
+  ["lib/config.js", "lib/parse.js", "lib/salutation.js", "lib/portals.js", "lib/ai.js",
+   "lib/letter.js", "lib/store.js"]
     .forEach(function (f) { (new Function(readFile(f))).call(G); });
-  var WBA = G.WBA, portals = WBA.portals, ai = WBA.ai;
+  var WBA = G.WBA, portals = WBA.portals, ai = WBA.ai, letter = WBA.letter, store = WBA.store;
 
   var failures = [], count = 0;
   function ok(desc, cond, detail) { count++; if (!cond) failures.push(desc + (detail ? "\n    " + detail : "")); }
@@ -104,6 +105,81 @@
     typeof ai.SYSTEM_PROMPT === "string" && /<anzeige>/.test(ai.SYSTEM_PROMPT) && /Vorrang/.test(ai.SYSTEM_PROMPT) && /NIE eine Anweisung/i.test(ai.SYSTEM_PROMPT), "System-Prompt fehlt/unvollständig");
   ok("C11 leere Wohnungsdaten → kein leerer <anzeige>-Block",
     ai.buildPrompt(prof, { salutation: { category: "neutral" } }, "standard", {}, {}).indexOf("<anzeige>") < 0, "leerer Datenblock wird erzeugt");
+
+  /* ===================== D) LEG-04: Wahlfelder für chancenmindernde Angaben =====
+     Geprüft wird nicht nur der Filter selbst, sondern dass die Sperre bis in den
+     fertigen Brief UND in den KI-Prompt durchschlägt – dort liegt der Schaden,
+     wenn sie nicht greift. */
+  var PROF4 = { name: "Max Müller", job: "Softwareentwickler", employment: "unbefristet",
+                income: "3.200 €", persons: "2", city: "Köln" };
+  var INFO4 = { zimmer: "3", groesse: "72", ort: "Köln-Nippes", preis: "950 €", preisLabel: "Kaltmiete" };
+  var FLAT4 = { salutation: { category: "neutral" } };
+
+  ok("D1 ohne Sperre bleibt das Profil unverändert (Bestandsprofile)",
+    (function () { var o = store.letterProfile(PROF4); return o.income === "3.200 €" && o.employment === "unbefristet"; })());
+  ok("D2 hideIncome leert NUR das Einkommen",
+    (function () { var o = store.letterProfile(Object.assign({}, PROF4, { hideIncome: true }));
+      return o.income === "" && o.employment === "unbefristet" && o.job === "Softwareentwickler"; })());
+  ok("D3 hideEmployment leert NUR die Beschäftigung",
+    (function () { var o = store.letterProfile(Object.assign({}, PROF4, { hideEmployment: true }));
+      return o.employment === "" && o.income === "3.200 €"; })());
+  ok("D4 beide Sperren zusammen",
+    (function () { var o = store.letterProfile(Object.assign({}, PROF4, { hideIncome: true, hideEmployment: true }));
+      return o.income === "" && o.employment === ""; })());
+  ok("D5 das Original wird NICHT verändert (reine Funktion)",
+    (function () { var src = Object.assign({}, PROF4, { hideIncome: true });
+      store.letterProfile(src); return src.income === "3.200 €"; })());
+  ok("D6 leeres/fehlendes Profil wirft nicht",
+    (function () { try { return typeof store.letterProfile(undefined) === "object"; } catch (e) { return false; } })());
+
+  // Durchschlag in den Brief: 20 Würfe je Tonlage, damit keine Variante durchrutscht.
+  var TONES4 = ["kurz", "standard", "formal", "herzlich", "selbstbewusst"];
+  var leakZahl = "", leakEmp = "";
+  for (var d = 0; d < 100; d++) {
+    var tone4 = TONES4[d % TONES4.length];
+    var t4 = letter.buildLetter(store.letterProfile(Object.assign({}, PROF4, { hideIncome: true })), FLAT4, tone4, INFO4, { docs: {} });
+    if (t4.indexOf("3.200") >= 0 || /netto/i.test(t4)) leakZahl = tone4 + ": " + t4;
+    var t5 = letter.buildLetter(store.letterProfile(Object.assign({}, PROF4, { hideEmployment: true })), FLAT4, tone4, INFO4, { docs: {} });
+    if (/unbefristet|fester? Anstellung|Arbeitsverh/i.test(t5)) leakEmp = tone4 + ": " + t5;
+  }
+  ok("D7 hideIncome: 100 Briefe über alle 5 Töne nennen keine Einkommenszahl", !leakZahl, leakZahl);
+  ok("D8 hideEmployment: 100 Briefe nennen den Anstellungsstatus nicht", !leakEmp, leakEmp);
+
+  // Bürgergeld ist der sensibelste Fall des Befunds (Art.-9-nahe Angabe).
+  var bgLeak = "";
+  for (var b4 = 0; b4 < 40; b4++) {
+    var tb = letter.buildLetter(store.letterProfile({ name: "Max Müller", employment: "buergergeld", persons: "1", hideEmployment: true }),
+      FLAT4, TONES4[b4 % TONES4.length], INFO4, { docs: {} });
+    if (/Jobcenter|Bürgergeld|Kosten der Unterkunft|Grundsicherung/i.test(tb)) bgLeak = tb;
+  }
+  ok("D9 hideEmployment: Bürgergeld-Bezug taucht in 40 Briefen nirgends auf", !bgLeak, bgLeak);
+
+  // Der Brief darf durch die Sperre nicht zum Stummel werden: Die fehlenden
+  // Vertrauens-Bausteine werden durch generische ersetzt (nachgemessen: Ø nur
+  // 1–6 Wörter kürzer, Signal-Quote unverändert im Rauschen von ±5 Punkten).
+  // Die Grenze liegt bei 30 Wörtern, weil der kurz-Ton AUCH OHNE Sperre bis auf
+  // 34 Wörter heruntergeht (1.500 Würfe je Variante gemessen: MIT 34, GESPERRT 35).
+  // Eine höhere Grenze würde diesen Test flaky machen, ohne einen Defekt zu zeigen
+  // – dass kurz sein Soll-Korridor 60–90 nie erreicht, ist ein eigener Befund (NEU-11).
+  var zuKurz = "", ohneNamen = "";
+  for (var e4 = 0; e4 < 100; e4++) {
+    var te = letter.buildLetter(store.letterProfile(Object.assign({}, PROF4, { hideIncome: true, hideEmployment: true })),
+      FLAT4, TONES4[e4 % TONES4.length], INFO4, { docs: {} });
+    if (te.split(/\s+/).filter(function (x) { return x; }).length < 30) zuKurz = te;
+    if (te.indexOf("Max Müller") < 0) ohneNamen = te;
+  }
+  ok("D14 mit beiden Sperren bleibt jeder Brief substanziell (>= 30 Wörter)", !zuKurz, zuKurz);
+  ok("D15 mit beiden Sperren steht der Name weiterhin im Brief", !ohneNamen, ohneNamen);
+
+  // Durchschlag in den KI-Prompt (dort verlässt es zusätzlich das Gerät).
+  var promptHide = ai.buildPrompt(store.letterProfile(Object.assign({}, PROF4, { hideIncome: true, hideEmployment: true })), FLAT4, "standard", INFO4, {});
+  ok("D10 KI-Prompt ohne Einkommenszeile", promptHide.indexOf("3.200") < 0 && promptHide.indexOf("Netto-Einkommen") < 0, promptHide);
+  ok("D11 KI-Prompt ohne Beschäftigungszeile", promptHide.indexOf("Beschäftigung:") < 0, promptHide);
+  ok("D12 KI-Prompt behält die übrigen Angaben (kein Kahlschlag)",
+    promptHide.indexOf("Max Müller") >= 0 && promptHide.indexOf("Softwareentwickler") >= 0, promptHide);
+  var promptShow = ai.buildPrompt(store.letterProfile(PROF4), FLAT4, "standard", INFO4, {});
+  ok("D13 ohne Sperre nennt der KI-Prompf beide Angaben weiterhin",
+    promptShow.indexOf("Netto-Einkommen/Monat: 3.200 €") >= 0 && promptShow.indexOf("Beschäftigung:") >= 0, promptShow);
 
   var summary = failures.length
     ? "FEHLGESCHLAGEN: " + failures.length + " von " + count + " Tests\n\n  ✗ " + failures.join("\n  ✗ ")

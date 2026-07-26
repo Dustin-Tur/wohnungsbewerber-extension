@@ -128,6 +128,10 @@
   async function loadProfile() {
     const data = await store.getProfile();
     profileFields.forEach((f) => { if (data[f] != null && $(f)) $(f).value = data[f]; });
+    // LEG-04: gespeichert wird die SPERRE, angezeigt die Erlaubnis. Bestandsprofile
+    // ohne die Felder bleiben damit auf „nennen" – ohne Migration.
+    if ($("tellIncome")) $("tellIncome").checked = !data.hideIncome;
+    if ($("tellEmployment")) $("tellEmployment").checked = !data.hideEmployment;
     const flat = await store.getFlat();
     if (flat.desc != null) $("flatDesc").value = flat.desc;
     if (flat.contactAnrede != null) $("contactAnrede").value = flat.contactAnrede;
@@ -138,7 +142,14 @@
     }
     refreshParsed();
   }
-  function getProfile() { const p = {}; profileFields.forEach((f) => (p[f] = $(f) ? $(f).value.trim() : "")); return p; }
+  function getProfile() {
+    const p = {}; profileFields.forEach((f) => (p[f] = $(f) ? $(f).value.trim() : ""));
+    // LEG-04: nur setzen, wenn die Checkbox existiert – sonst würde ein fehlendes
+    // Element die Sperre stillschweigend aufheben.
+    if ($("tellIncome")) p.hideIncome = !$("tellIncome").checked;
+    if ($("tellEmployment")) p.hideEmployment = !$("tellEmployment").checked;
+    return p;
+  }
   // Autosave (entprellt): Wer den Tab schließt, ohne „Profil speichern" zu klicken,
   // verliert sonst still alle Eingaben. Der Button bleibt als explizite Bestätigung.
   let profileSaveTimer = null;
@@ -159,6 +170,10 @@
     try { await store.remove([store.KEYS.profile, store.KEYS.history, store.KEYS.flat, store.KEYS.docs, store.KEYS.textfp]); }
     catch (e) { saveErrToast(e); return; } // Daten sind NICHT weg → UI nicht leeren
     profileFields.forEach((f) => { if ($(f)) $(f).value = ""; });
+    // LEG-04: Das gelöschte Profil kennt keine Sperre mehr – die Häkchen müssen
+    // deshalb auch sichtbar auf den Standard („nennen") zurückfallen.
+    if ($("tellIncome")) $("tellIncome").checked = true;
+    if ($("tellEmployment")) $("tellEmployment").checked = true;
     $("flatDesc").value = ""; $("contactAnrede").value = ""; $("contactName").value = "";
     historyList = []; docsState = {};
     refreshParsed(); renderHistory();
@@ -223,6 +238,15 @@
   $("clearAllData").addEventListener("click", clearAllData);
   $("exportAllData").addEventListener("click", exportAllData);
   $("importAllData").addEventListener("click", importAllData);
+  // LEG-04: Die zwei Wahlfelder speichern wie die übrigen Profilfelder (entprellt)
+  // und melden die Wirkung sofort zurück – sonst bleibt unklar, ob der Klick zählte.
+  [["tellIncome", "profile.tellIncome"], ["tellEmployment", "profile.tellEmployment"]].forEach(([id, key]) => {
+    const el = $(id); if (!el) return;
+    el.addEventListener("change", () => {
+      autosaveProfile();
+      toast(tr(key + (el.checked ? "On" : "Off")), "info");
+    });
+  });
   ["flatDesc","contactName"].forEach((id) => $(id).addEventListener("input", saveFlat));
   $("contactAnrede").addEventListener("change", saveFlat);
   $("employment").addEventListener("change", renderChecklist);
@@ -357,19 +381,24 @@
     }
     parsedInfo = parse.extractFlatInfo(flat.desc);
 
+    // LEG-04: Ab hier zählt nur die Anschreiben-Sicht des Profils. Validierung
+    // und Fortschritt arbeiten weiter mit den echten Werten – gesperrt wird die
+    // Weitergabe an Vorlage und KI, nicht die Speicherung.
+    const pl = store.letterProfile(p);
+
     // KI bevorzugt (im Hintergrund), sonst der kompositorische Generator.
     let text = null;
     const settings = await store.getSettings();
     const btn = $("generate");
     if (WBA.ai && WBA.ai.isConfigured(settings)) {
       const label = btn.textContent; btn.disabled = true; btn.textContent = tr("letter.aiWriting");
-      text = await WBA.ai.request({ profile: p, flat, mode: currentMode, info: parsedInfo, docs: docsState });
+      text = await WBA.ai.request({ profile: pl, flat, mode: currentMode, info: parsedInfo, docs: docsState });
       btn.disabled = false; btn.textContent = label;
       // Blacklist gilt auch für KI-Texte: Floskel drin → eingebauten Generator nutzen.
-      if (text && letter.containsBlacklisted(text, p.about)) text = null;
+      if (text && letter.containsBlacklisted(text, pl.about)) text = null;
       if (!text) toast(tr("letter.aiFallback"), "info");
     }
-    if (!text) text = await letter.generate(p, flat, currentMode, parsedInfo, { docs: docsState });
+    if (!text) text = await letter.generate(pl, flat, currentMode, parsedInfo, { docs: docsState });
 
     const out = $("output");
     out.classList.remove("out-empty"); out.textContent = text;
@@ -477,7 +506,9 @@
       const hits = refreshParsed(); // Chips zeigen sofort, was erkannt wurde
       const real = getProfile();
       const isDemoProfile = !real.name;
-      const p = isDemoProfile ? DEMO_PROFILE : real;
+      // Auch die Vorschau zeigt, was der Nutzer freigegeben hat (LEG-04) – sonst
+      // sähe die Demo einen Brief, den er so nie verschickt.
+      const p = isDemoProfile ? DEMO_PROFILE : store.letterProfile(real);
       const flat = { desc: DEMO_FLAT_TEXT, salutation: { category: "frau", name: "Weber" } };
       // buildLetter statt generate(): die Demo soll wirklich NICHTS persistieren –
       // generate() würde einen Text-Fingerprint schreiben und damit einen der 20

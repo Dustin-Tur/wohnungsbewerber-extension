@@ -254,6 +254,19 @@
           <div class="field"><label for="pets" data-i18n="profile.pets">Haustiere</label><input id="pets" autocomplete="off" data-i18n-attr="placeholder:profile.petsPh" placeholder="z. B. keine / 1 Katze"></div>
         </div>
         <p style="font-size:.78rem;color:var(--muted);margin:10px 0 0" data-i18n-html="profile.buergergeldNote">Wählst du bei „Beschäftigung" <b>„Arbeitslos / Bürgergeld / Grundsicherung"</b>, werden Beruf und Einkommen automatisch deaktiviert – die Miete läuft dann über das Jobcenter.</p>
+        <!-- LEG-04: Beide Angaben sind vor Vertragsschluss meist nicht geschuldet.
+             Standard bleibt „nennen" (überzeugt nachweislich stärker), aber es wird
+             zur Entscheidung des Nutzers statt zur Voreinstellung des Werkzeugs.
+             Wirkt nur auf ANSCHREIBEN (Vorlage + KI), nicht auf die Selbstauskunft-PDF. -->
+        <label class="check-item" style="margin-top:12px">
+          <input type="checkbox" id="tellIncome" checked>
+          <span data-i18n="profile.tellIncome">Einkommen im Anschreiben nennen</span>
+        </label>
+        <label class="check-item" style="margin-top:6px">
+          <input type="checkbox" id="tellEmployment" checked>
+          <span data-i18n="profile.tellEmployment">Beschäftigungsstatus im Anschreiben nennen</span>
+        </label>
+        <p style="font-size:.78rem;color:var(--muted);margin:8px 0 0" data-i18n="profile.tellNote">Beides ist freiwillig — rechtlich musst du diese Angaben vor Vertragsschluss meist nicht machen. Mit Angabe wirken Bewerbungen oft stärker, ohne bleibt es deine Entscheidung.</p>
         <div class="field" style="margin-top:12px">
           <label for="about" data-i18n="profile.about">Kurze persönliche Beschreibung</label>
           <textarea id="about" autocomplete="off" data-i18n-attr="placeholder:profile.aboutPh" placeholder="z. B. ruhig, ordentlich, Nichtraucher, festes Arbeitsverhältnis seit 4 Jahren."></textarea>
