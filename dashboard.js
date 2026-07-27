@@ -632,37 +632,27 @@
       return ok;
     }
   }
-  // ACHTUNG: Die Selbstauskunft ist ein DEUTSCHES Dokument für deutsche Vermieter
-  // und bleibt in JEDER Oberflächensprache deutsch – wie das Anschreiben selbst.
-  // Deshalb hier bewusst feste Texte statt i18n (siehe Invariante in lib/i18n.js).
-  function empLabelDe(emp) { return { unbefristet: "Angestellt (unbefristet)", befristet: "Angestellt (befristet)", selbststaendig: "Selbstständig", azubi: "Ausbildung / Studium", rente: "Rente / Pension", buergergeld: "Arbeitslos / Bürgergeld / Grundsicherung" }[emp] || ""; }
-  function selbstauskunftHTML(p, flat, info) {
-    const today = new Date().toLocaleDateString("de-DE");
-    const rows = (pairs) => pairs.filter((x) => x[1]).map((x) => "<tr><th>" + esc(x[0]) + "</th><td>" + esc(x[1]) + "</td></tr>").join("");
-    let finanz = [["Beschäftigung", empLabelDe(p.employment)]];
-    if (p.employment === "buergergeld") finanz.push(["Mietzahlung", "über das Jobcenter (Kosten der Unterkunft) – Direktzahlung an den Vermieter möglich"]);
-    else if (p.income) finanz.push([p.employment === "rente" ? "Rente (netto/Monat)" : "Einkommen (netto/Monat)", p.income]);
-    const wohnung = parse.flatOneLine(flat);
-    const einzug = info && info.frei ? (info.frei === "sofort" ? "sofort" : "ab " + info.frei) : "";
-    return '<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>Mieterselbstauskunft</title>' +
-'<style>*{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:#111;background:#fff;margin:0;padding:32px 40px;line-height:1.5}.banner{background:#eef;border:1px solid #ccd;border-radius:10px;padding:10px 14px;font-size:13px;color:#334;margin-bottom:24px}h1{font-size:24px;margin:0 0 2px}.date{color:#666;font-size:13px;margin:0 0 22px}h2{font-size:14px;text-transform:uppercase;letter-spacing:.05em;color:#4f46e5;border-bottom:2px solid #e5e7ff;padding-bottom:4px;margin:22px 0 8px}table{width:100%;border-collapse:collapse;font-size:14px}th{text-align:left;font-weight:600;color:#374151;width:210px;vertical-align:top;padding:5px 8px 5px 0}td{padding:5px 0;vertical-align:top}.decl{margin-top:26px;font-size:13px;color:#374151}.sign{display:flex;gap:40px;margin-top:40px;font-size:13px;color:#666}.sign>div{flex:1;border-top:1px solid #999;padding-top:6px}@media print{.banner{display:none}body{padding:0}}</style></head><body>' +
-'<div class="banner">Deine Selbstauskunft ist fertig. Zum Speichern: <b>Strg/Cmd + P</b> → „Als PDF speichern". (Dieser Hinweis wird nicht mitgedruckt.)</div>' +
-'<h1>Mieterselbstauskunft</h1><p class="date">Stand: ' + esc(today) + '</p>' +
-'<h2>Bewerber:in</h2><table>' + rows([["Name", p.name],["Alter", p.age ? p.age + " Jahre" : ""],["Beruf", p.job],["E-Mail", p.email],["Telefon", p.phone]]) + '</table>' +
-'<h2>Haushalt</h2><table>' + rows([["Anzahl Personen", p.persons],["Haustiere", p.pets]]) + '</table>' +
-'<h2>Finanzielles</h2><table>' + rows(finanz) + '</table>' +
-'<h2>Gewünschte Wohnung</h2><table>' + rows([["Objekt", wohnung],["Gewünschter Einzug", einzug]]) + '</table>' +
-(p.about ? '<h2>Bemerkungen</h2><p style="font-size:14px">' + esc(p.about) + '</p>' : '') +
-'<p class="decl">Ich versichere, dass die vorstehenden Angaben der Wahrheit entsprechen.</p>' +
-'<div class="sign"><div>Ort, Datum</div><div>Unterschrift</div></div></body></html>';
-  }
+  // Das Dokument selbst baut lib/selbstauskunft.js – dieselbe Engine benutzt der
+  // Generator auf wohnungsbewerber.app (Kopie über landing/_tools/sync-engine.py).
+  // Hier bleibt nur, was extension-eigen ist: Profil und Anzeigentext einsammeln.
+  // LEG-04: bewusst getProfile() statt store.letterProfile() – die beiden
+  // Häkchen verbergen Einkommen/Beschäftigung im ANSCHREIBEN; in einer
+  // Selbstauskunft wären genau diese Angaben der Zweck (Begründung steht in lib/).
+  const SA_BANNER = 'Deine Selbstauskunft ist fertig. Zum Speichern: <b>Strg/Cmd + P</b> → „Als PDF speichern". (Dieser Hinweis wird nicht mitgedruckt.)';
   $("makeSelbstauskunft").addEventListener("click", () => {
     const p = getProfile();
     if (!p.name) { flash("docHint", tr("docs.needName")); showTab("profil"); return; }
     const flat = { desc: $("flatDesc").value.trim() }; const info = parse.extractFlatInfo(flat.desc);
     const w = window.open("", "_blank");
     if (!w) { flash("docHint", tr("docs.popupBlocked")); return; }
-    w.document.open(); w.document.write(selbstauskunftHTML(p, flat, info)); w.document.close();
+    const d = {
+      name: p.name, age: p.age, job: p.job, email: p.email, phone: p.phone,
+      persons: p.persons, pets: p.pets, employment: p.employment, income: p.income,
+      wohnung: parse.flatOneLine(flat),
+      einzug: info && info.frei ? (info.frei === "sofort" ? "sofort" : "ab " + info.frei) : "",
+      about: p.about,
+    };
+    w.document.open(); w.document.write(WBA.selbstauskunft.documentHTML(d, SA_BANNER)); w.document.close();
     setDoc("selbstauskunft", true); renderChecklist();
     flash("docHint", tr("docs.opened"));
   });
