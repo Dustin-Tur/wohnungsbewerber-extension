@@ -9,7 +9,7 @@ Sie erkennt Wohnungsanzeigen auf den großen Portalen und bereitet in Sekunden e
 ---
 
 ## Was die Extension macht
-- Erkennt Wohnungsanzeigen auf **ImmobilienScout24, Kleinanzeigen, WG-Gesucht, Immowelt & Immonet**
+- Erkennt Wohnungsanzeigen auf **ImmobilienScout24, Kleinanzeigen, WG-Gesucht & Immowelt**
 - Liest die relevanten Eckdaten der Anzeige aus (Parsing)
 - Erstellt in Sekunden ein passendes, persönliches Anschreiben – **lokal auf deinem Gerät**, inklusive korrekter Anrede (optional per eigener Claude-Anbindung)
 - Verwaltet deine Bewerberdaten **lokal im Browser** – keine Datenweitergabe

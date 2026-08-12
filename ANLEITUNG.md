@@ -1,6 +1,6 @@
 # WohnungsBewerber – Chrome-Erweiterung
 
-Hilft dir, auf den großen Portalen (WG-Gesucht, Kleinanzeigen, ImmoScout24, Immowelt/Immonet)
+Hilft dir, auf den großen Portalen (WG-Gesucht, Kleinanzeigen, ImmoScout24, Immowelt)
 Wohnungen zu finden und die Bewerbungen vorzubereiten – **du prüfst und sendest jede Nachricht
 selbst**. Es wird nie automatisch versendet. Alles läuft lokal, keine Datenweitergabe.
 

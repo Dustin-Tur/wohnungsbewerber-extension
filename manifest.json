@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "default_locale": "de",
   "name": "__MSG_extName__",
-  "version": "2.8.0",
+  "version": "2.8.1",
   "description": "__MSG_extDescription__",
   "icons": {
     "16": "icons/icon16.png",
@@ -28,8 +28,7 @@
     "https://www.wg-gesucht.de/*",
     "https://www.kleinanzeigen.de/*",
     "https://www.immobilienscout24.de/*",
-    "https://www.immowelt.de/*",
-    "https://www.immonet.de/*"
+    "https://www.immowelt.de/*"
   ],
   "optional_host_permissions": ["https://api.anthropic.com/*"],
   "content_scripts": [
@@ -38,8 +37,7 @@
         "https://www.wg-gesucht.de/*",
         "https://www.kleinanzeigen.de/*",
         "https://www.immobilienscout24.de/*",
-        "https://www.immowelt.de/*",
-        "https://www.immonet.de/*"
+        "https://www.immowelt.de/*"
       ],
       "js": ["lib/config.js", "lib/i18n.js", "lib/icons.js", "lib/parse.js", "lib/salutation.js", "lib/letter.js", "lib/portals.js", "lib/store.js", "lib/ai.js", "content.js"],
       "run_at": "document_idle"

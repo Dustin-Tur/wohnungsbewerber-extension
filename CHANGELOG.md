@@ -4,6 +4,26 @@ Referenzen wie „A1", „B4" verweisen auf die Befund-Nummern in `AUDIT.md`.
 Referenzen wie „SEC-01", „FUN-03" (ab 2.7.0) sind die Befund-IDs des
 Voll-Audits vom 25.07.2026; sie stehen auch in den Commit-Betreffs.
 
+## 2.8.1 — 2026-08-12 · Immonet entfernt (Portal abgeschaltet)
+
+Immonet gibt es nicht mehr: `immonet.de` antwortet seit dem Zusammenschluss mit
+Immowelt nur noch mit `301 → https://www.immowelt.de#x-sunset-redirect=imn`
+(am 12.08.2026 nachgeprüft, auch für Detail-URLs wie `/angebot/<id>`). Dort kann
+also keine Anzeige mehr geöffnet werden.
+
+- **Manifest:** `https://www.immonet.de/*` aus `host_permissions` und aus den
+  `content_scripts.matches` entfernt. Die Erweiterung fordert damit keine Rechte
+  mehr für eine tote Domain — das war sonst eine unnötige Angriffsfläche in der
+  Store-Prüfung und im Rechte-Dialog beim Installieren.
+- **`lib/portals.js`:** Adapter heißt jetzt „Immowelt" (statt „Immowelt /
+  Immonet"), Host-Muster, `listingUrlRe`, `resultsUrlRe` und `URL_PATTERNS` ohne
+  Immonet. Der Tracker zeigt bestehende Einträge unverändert an: gespeichert wird
+  die Portal-**ID** `immowelt`, der Anzeigename wird jedes Mal frisch nachgeschlagen.
+- **Texte:** README, ANLEITUNG und TESTING nennen Immonet nicht mehr.
+
+Nichts an der Erkennung oder am Formular-Befüllen geändert — Immowelt selbst
+funktioniert unverändert (Aviv-CDP-Selektoren bleiben, wie sie waren).
+
 ## 2.8.0 — 2026-07-26 · Zweite Person im Haushalt, mehr Satzvarianz
 
 2.7.0 war fertig gebaut, aber nie im Store – dieses Paket enthält beides.

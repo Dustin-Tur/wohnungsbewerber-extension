@@ -151,9 +151,9 @@ Vorbedingung: beim Portal eingeloggt.
 - ☐ Tracker-ID stabil: dieselbe Anzeige mit/ohne UTM-Parameter geöffnet →
   EIN Tracker-Eintrag (alphanumerische Expose-ID).
 
-**Immonet** (`immonet.de` — nutzt den Immowelt-Adapter)
-- ☐ Anzeige unter immonet.de öffnen → Overlay + Formularbefüllung wie Immowelt.
-- ☐ Tracker führt den Eintrag unter „Immowelt / Immonet".
+**Immonet** — entfällt seit 2.8.1: immonet.de ist abgeschaltet und leitet nur noch
+auf www.immowelt.de um (geprüft 12.08.2026). Der Adapter, das Host-Muster und die
+Rechteanforderung wurden entfernt; zu testen ist nur noch Immowelt.
 
 ## 3. Anrede-Stichproben (portal-übergreifend)
 

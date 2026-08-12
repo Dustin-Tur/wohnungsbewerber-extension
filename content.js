@@ -1,5 +1,5 @@
 /* content.js – läuft auf den Portalseiten (WG-Gesucht, Kleinanzeigen, ImmoScout,
-   Immowelt/Immonet). Erkennt Trefferliste vs. Einzelanzeige, füllt das
+   Immowelt). Erkennt Trefferliste vs. Einzelanzeige, füllt das
    Kontaktformular mit dem erzeugten Anschreiben vor und zeigt ein Overlay zur
    Bestätigung. Gesendet wird NIE automatisch – der Nutzer klickt selbst.
    Alle Aktionen sind defensiv: bricht ein Portal aus dem erwarteten HTML aus,
