@@ -4,6 +4,26 @@ Referenzen wie „A1", „B4" verweisen auf die Befund-Nummern in `AUDIT.md`.
 Referenzen wie „SEC-01", „FUN-03" (ab 2.7.0) sind die Befund-IDs des
 Voll-Audits vom 25.07.2026; sie stehen auch in den Commit-Betreffs.
 
+## 2.8.2 — 2026-08-14 · ImmoScout24: Titel-Haken nachgezogen
+
+Der Portal-Wächter meldete über neun Läufe, dass der genaue Titel-Haken bei
+ImmoScout24 ins Leere greift. Nachgesehen: ImmoScout hat die Überschrift der
+Anzeige umgebaut. Die Kennung „expose-title" steht nicht mehr in der `id`,
+sondern in `data-qa` — aus `<h1 id="expose-title">` wurde
+`<h1 data-qa="expose-title">`.
+
+- **`lib/portals.js`:** `contentSel` bei `immoscout` beginnt jetzt mit
+  `h1[data-qa="expose-title"]`. Am 14.08.2026 auf zwei Kölner Anzeigen
+  nachgemessen: alter Haken 0 Treffer, neuer genau 1.
+- Die alte `id` bleibt als zweiter Eintrag stehen. Sie kostet nichts (ein
+  Selektor, der nichts findet, trägt nichts bei) und fängt den Fall ab, dass
+  ImmoScout den Umbau noch nicht bei allen Nutzenden ausgerollt hat.
+
+Für die Nutzenden ändert sich nichts Sichtbares: Das Auffangnetz `is24qa-`
+hatte die Anzeige die ganze Zeit weiter erfasst, nur ohne den Titel sauber als
+Titel zu erkennen. Ausgelesen wird jetzt wieder der präzise Bereich statt nur
+das grobe Netz.
+
 ## 2.8.1 — 2026-08-12 · Immonet entfernt (Portal abgeschaltet)
 
 Immonet gibt es nicht mehr: `immonet.de` antwortet seit dem Zusammenschluss mit
